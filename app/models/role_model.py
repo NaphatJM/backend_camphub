@@ -10,7 +10,7 @@ class Role(SQLModel, table=True):
 
     id: Optional[int] = Field(default=None, primary_key=True)
     name: str = Field(unique=True, index=True)
-    description: str
+    description: Optional[str] = Field(default=None)
 
     # Relationships
     users: list["User"] = Relationship(back_populates="role")

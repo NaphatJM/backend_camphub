@@ -4,7 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-from app.models import init_db, get_session, User, async_engine
+from app.models import init_db, get_session, User, async_engine, Role
 from app.core.security import hash_password
 from app.routers import router
 from app.core.config import get_settings
@@ -16,8 +16,21 @@ settings = get_settings()
 async def lifespan(app: FastAPI):
     await init_db()
     async with AsyncSession(async_engine) as session:
+        result = await session.execute(select(Role))
+        role = result.scalars().first()
+        if not role:
+            session.add_all(
+                [
+                    Role(id=1, name="Professor"),
+                    Role(id=2, name="Student"),
+                ]
+            )
+            await session.commit()
+            print("Default roles created")
+
         result = await session.execute(select(User))
-        if not result.first():
+        user = result.scalars().first()
+        if not user:
             session.add(
                 User(
                     username="user_demo",
