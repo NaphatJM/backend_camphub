@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlmodel import Session, select
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
 from app.models import get_session, User
 from app.schemas import MeRead, MeUpdate
 from app.core.deps import get_current_user
@@ -9,7 +10,7 @@ router = APIRouter(prefix="/user", tags=["user"])
 
 
 @router.get("", response_model=MeRead)
-def get_me(current: User = Depends(get_current_user)):
+async def get_me(current: User = Depends(get_current_user)):
     return MeRead(
         id=current.id,
         username=current.username,
@@ -23,20 +24,26 @@ def get_me(current: User = Depends(get_current_user)):
 
 
 @router.put("", response_model=MeRead)
-def update_me(
+async def update_me(
     payload: MeUpdate,
     current: User = Depends(get_current_user),
-    session: Session = Depends(get_session),
+    session: AsyncSession = Depends(get_session),
 ):
     # Check username uniqueness
     if payload.username and payload.username != current.username:
-        if session.exec(select(User).where(User.username == payload.username)).first():
+        username_result = await session.execute(
+            select(User).where(User.username == payload.username)
+        )
+        if username_result.scalar_one_or_none():
             raise HTTPException(status_code=400, detail="Username already exists")
         current.username = payload.username
 
     # Check email uniqueness
     if payload.email and payload.email != current.email:
-        if session.exec(select(User).where(User.email == payload.email)).first():
+        email_result = await session.execute(
+            select(User).where(User.email == payload.email)
+        )
+        if email_result.scalar_one_or_none():
             raise HTTPException(status_code=400, detail="Email already exists")
         current.email = payload.email
 
@@ -61,8 +68,8 @@ def update_me(
         current.hashed_password = hash_password(payload.new_password)
 
     session.add(current)
-    session.commit()
-    session.refresh(current)
+    await session.commit()
+    await session.refresh(current)
 
     return MeRead(
         id=current.id,
