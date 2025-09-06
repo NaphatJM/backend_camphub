@@ -135,7 +135,7 @@ celerybeat.pid
 *.sage.py
 
 # Environments
-.env.*
+.env
 .envrc
 .venv
 env/
@@ -210,3 +210,4 @@ __marimo__/
 
 note.md
 database.db
+reference

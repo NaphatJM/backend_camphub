@@ -1,16 +1,21 @@
-from pydantic_settings import BaseSettings
-from typing import Optional
+# ttt/core/config.py
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    app_name: str = "Auth + Me Backend"
-    secret_key: str = "your-secret-key-here-change-in-production"
-    algorithm: str = "HS256"
-    access_token_expire_minutes: int = 60
-    database_url: str = "sqlite:///./app/db/app.db"
+    SQLDB_URL: str
+    SECRET_KEY: str
+    JWT_SECRET_KEY: str
+    JWT_ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
+    JWT_REFRESH_TOKEN_EXPIRE_MINUTES: int = 10080  # 7 days
+    JWT_ALGORITHM: str = "HS256"
 
-    class Config:
-        env_file = ".env"
+    model_config = SettingsConfigDict(
+        env_file=".env",  # ✅ ชัดเจนว่าใช้ .env
+        validate_assignment=True,
+        extra="ignore",
+    )
 
 
-settings = Settings()
+def get_settings():
+    return Settings()
