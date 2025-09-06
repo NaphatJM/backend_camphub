@@ -1,0 +1,11 @@
+FROM postgres:15
+
+# กำหนดค่า default
+ENV POSTGRES_USER=postgres
+ENV POSTGRES_PASSWORD=postgres
+ENV POSTGRES_DB=camphub
+
+# volume สำหรับเก็บข้อมูล
+VOLUME ["/var/lib/postgresql/data"]
+
+EXPOSE 5432
