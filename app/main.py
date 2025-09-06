@@ -5,7 +5,7 @@ from sqlmodel import Session, select
 from app.db.database import init_db, engine
 from app.models import User
 from app.core.security import hash_password
-from app.api.v1 import router
+from app.routers import router
 from app.core.config import settings
 
 
