@@ -6,6 +6,9 @@ from app.core.config import get_settings
 from .user_model import User
 from .faculty_model import Faculty
 from .role_model import Role
+from .course_model import Course
+from .enrollment_model import Enrollment
+from .course_teacher_link import CourseTeacherLink
 
 settings = get_settings()
 

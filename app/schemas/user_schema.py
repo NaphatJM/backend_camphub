@@ -27,12 +27,19 @@ class SignUpRequest(SQLModel):
 
 
 # Me
-class MeRead(SQLModel):
+class UserBase(SQLModel):
     id: int
     username: str
-    email: str
     first_name: str
     last_name: str
+
+
+class UserSimple(UserBase):
+    pass
+
+
+class MeRead(UserBase):
+    email: str
     birth_date: date
     faculty_id: Optional[int] = None
     year_of_study: Optional[int] = None

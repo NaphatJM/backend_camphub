@@ -5,6 +5,8 @@ from sqlmodel import SQLModel, Field, Relationship
 if TYPE_CHECKING:
     from .faculty_model import Faculty
     from .role_model import Role
+    from .course_model import Course
+    from .enrollment_model import Enrollment
 
 
 class User(SQLModel, table=True):
@@ -27,3 +29,7 @@ class User(SQLModel, table=True):
     # Relationships
     faculty: Optional["Faculty"] = Relationship(back_populates="users")
     role: "Role" = Relationship(back_populates="users")
+    courses: list["Course"] = Relationship(
+        back_populates="teachers", link_model="CourseTeacherLink"
+    )
+    enrollments: list["Enrollment"] = Relationship(back_populates="user")
