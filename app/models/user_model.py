@@ -1,6 +1,8 @@
 from typing import TYPE_CHECKING, Optional
 from datetime import date, datetime
 from sqlmodel import SQLModel, Field, Relationship
+from .course_teacher_link import CourseTeacherLink
+
 
 if TYPE_CHECKING:
     from .faculty_model import Faculty
@@ -30,6 +32,6 @@ class User(SQLModel, table=True):
     faculty: Optional["Faculty"] = Relationship(back_populates="users")
     role: "Role" = Relationship(back_populates="users")
     courses: list["Course"] = Relationship(
-        back_populates="teachers", link_model="CourseTeacherLink"
+        back_populates="teachers", link_model=CourseTeacherLink
     )
     enrollments: list["Enrollment"] = Relationship(back_populates="user")
