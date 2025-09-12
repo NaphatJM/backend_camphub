@@ -1,11 +1,8 @@
 from contextlib import asynccontextmanager
-from datetime import date
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
-from app.models import init_db, get_session, User, async_engine, Role
-from app.core.security import hash_password
+from app.models import init_db
+from app.db.init_data import init_all_data
 from app.routers import router
 from app.core.config import get_settings
 
@@ -14,35 +11,13 @@ settings = get_settings()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    # Initialize database tables
     await init_db()
-    async with AsyncSession(async_engine) as session:
-        result = await session.execute(select(Role))
-        role = result.scalars().first()
-        if not role:
-            session.add_all(
-                [
-                    Role(id=1, name="Professor"),
-                    Role(id=2, name="Student"),
-                ]
-            )
-            await session.commit()
-            print("Default roles created")
+    print("Database tables initialized")
 
-        result = await session.execute(select(User))
-        user = result.scalars().first()
-        if not user:
-            session.add(
-                User(
-                    username="user_demo",
-                    email="demo@mail.com",
-                    first_name="Demo",
-                    last_name="User",
-                    birth_date=date(1990, 1, 1),
-                    hashed_password=hash_password("123456"),
-                )
-            )
-            await session.commit()
-            print("Demo user created")
+    # Initialize default data
+    await init_all_data()
+
     yield
 
 

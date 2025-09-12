@@ -44,6 +44,17 @@ app/
 - Docker and Docker Compose
 - Git
 
+
+### Default Credentials
+
+| Role | Email | Password |
+|------|-------|----------|
+| Admin | admin@camphub.com | admin123 |
+| Professor | prof.smith@camphub.com | prof123 |
+| Student | student.doe@camphub.com | student123 |
+
+
+
 ### Step-by-Step Setup
 
 1. **Clone the repository**
