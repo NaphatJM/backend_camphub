@@ -1,17 +1,19 @@
 from fastapi import Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from app.models import get_session, User
 from app.core.security import decode_token
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/signin")
+security = HTTPBearer()
 
 
 async def get_current_user(
-    token: str = Depends(oauth2_scheme), session: AsyncSession = Depends(get_session)
+    credentials: HTTPAuthorizationCredentials = Depends(security),
+    session: AsyncSession = Depends(get_session),
 ) -> User:
     try:
+        token = credentials.credentials
         payload = decode_token(token)
         username = payload.get("sub")
         if not username:
