@@ -68,11 +68,11 @@ app/
 
    ```bash
    # Create virtual environment
-   python -m venv venv
+   python -m venv .venv
 
    # Activate virtual environment
    # Windows:
-   venv\Scripts\activate
+   venv/Scripts/activate
    # macOS/Linux:
    source venv/bin/activate
    ```
