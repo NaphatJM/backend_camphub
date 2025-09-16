@@ -13,6 +13,7 @@ class Enrollment(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     course_id: int = Field(foreign_key="course.id")
     user_id: int = Field(foreign_key="user.id")
+    status: str = Field(default="enrolled")  # e.g., enrolled, completed, dropped
     enrollment_at: datetime = Field(default_factory=datetime.now)
 
     # Relationships

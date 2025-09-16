@@ -6,6 +6,7 @@ from app.models.course_teacher_link import CourseTeacherLink
 if TYPE_CHECKING:
     from app.models.user_model import User
     from app.models.enrollment_model import Enrollment
+    from app.models.course_schedule_model import CourseSchedule
 
 
 class Course(SQLModel, table=True):
@@ -24,3 +25,4 @@ class Course(SQLModel, table=True):
         back_populates="courses", link_model=CourseTeacherLink
     )
     enrollments: list["Enrollment"] = Relationship(back_populates="course")
+    schedules: list["CourseSchedule"] = Relationship(back_populates="course")
