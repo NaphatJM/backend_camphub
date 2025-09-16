@@ -2,13 +2,16 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from sqlalchemy import select
+from app.core.deps import get_current_user
 from app.models import get_session, Course
 from app.schemas.course_schedule_schema import (
     CourseReadWithSchedule,
     CourseScheduleRead,
 )
 
-router = APIRouter(prefix="/courses", tags=["courses"])
+router = APIRouter(
+    prefix="/courses", tags=["courses"], dependencies=[Depends(get_current_user)]
+)
 
 
 # ✅ ดึง course ตาม id
