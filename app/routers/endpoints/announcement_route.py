@@ -26,7 +26,7 @@ async def get_announcement_by_id(
 ):
     announcement = await session.get(Announcement, announcement_id)
     if not announcement:
-        raise HTTPException(status_code=404, detail="Announcement not found")
+        raise HTTPException(status_code=404, detail="ไม่พบข่าวประกาศ")
     return announcement
 
 
@@ -53,7 +53,7 @@ async def update_announcement(
     # Get the existing announcement
     announcement = await session.get(Announcement, announcement_id)
     if not announcement:
-        raise HTTPException(status_code=404, detail="Announcement not found")
+        raise HTTPException(status_code=404, detail="ไม่พบข่าวประกาศ")
 
     # Update only the fields that were provided
     update_data = announcement_update.model_dump(exclude_unset=True)
@@ -74,9 +74,9 @@ async def delete_announcement(
 ):
     announcement = await session.get(Announcement, announcement_id)
     if not announcement:
-        raise HTTPException(status_code=404, detail="Announcement not found")
+        raise HTTPException(status_code=404, detail="ไม่พบข่าวประกาศ")
 
     await session.delete(announcement)
     await session.commit()
 
-    return {"message": "Announcement deleted successfully"}
+    return {"message": "ลบข่าวประกาศเรียบร้อยแล้ว"}

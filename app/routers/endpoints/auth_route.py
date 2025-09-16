@@ -16,14 +16,14 @@ async def signup(payload: SignUpRequest, session: AsyncSession = Depends(get_ses
             select(User).where(User.username == payload.username)
         )
         if username_result.scalar_one_or_none():
-            raise HTTPException(status_code=400, detail="Username already exists")
+            raise HTTPException(status_code=400, detail="ชื่อผู้ใช้นี้ถูกใช้แล้ว")
 
         # Check email uniqueness
         email_result = await session.execute(
             select(User).where(User.email == payload.email)
         )
         if email_result.scalar_one_or_none():
-            raise HTTPException(status_code=400, detail="Email already exists")
+            raise HTTPException(status_code=400, detail="อีเมลนี้ถูกใช้แล้ว")
 
         # Validate foreign key constraints if provided
         if payload.faculty_id is not None:
@@ -33,7 +33,7 @@ async def signup(payload: SignUpRequest, session: AsyncSession = Depends(get_ses
                 select(Faculty).where(Faculty.id == payload.faculty_id)
             )
             if not faculty_result.scalar_one_or_none():
-                raise HTTPException(status_code=400, detail="Invalid faculty_id")
+                raise HTTPException(status_code=400, detail="กรุณากรอกคณะให้ถูกต้อง")
 
         if payload.role_id is not None:
             from app.models.role_model import Role
@@ -42,7 +42,7 @@ async def signup(payload: SignUpRequest, session: AsyncSession = Depends(get_ses
                 select(Role).where(Role.id == payload.role_id)
             )
             if not role_result.scalar_one_or_none():
-                raise HTTPException(status_code=400, detail="Invalid role_id")
+                raise HTTPException(status_code=400, detail="กรุณากรอกบทบาทให้ถูกต้อง")
 
         # Create user with validated data
         user = User(
@@ -74,7 +74,7 @@ async def signup(payload: SignUpRequest, session: AsyncSession = Depends(get_ses
     except Exception as e:
         # Handle database errors and other unexpected errors
         await session.rollback()
-        raise HTTPException(status_code=500, detail=f"Failed to create user: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"เกิดข้อผิดพลาด: {str(e)}")
 
 
 @router.post("/signin", response_model=Token)
@@ -84,7 +84,7 @@ async def signin(creds: LoginRequest, session: AsyncSession = Depends(get_sessio
     if not user or not verify_password(creds.password, user.hashed_password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect email or password",
+            detail="อีเมลหรือรหัสผ่านไม่ถูกต้อง",
         )
     # Access username before any potential session issues
     username = user.username
