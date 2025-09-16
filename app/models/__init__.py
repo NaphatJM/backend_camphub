@@ -4,13 +4,14 @@ from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from app.core.config import get_settings
 
 # Models
-from .user_model import User
 from .faculty_model import Faculty
 from .role_model import Role
+from .course_teacher_link import CourseTeacherLink
+from .user_model import User
 from .course_model import Course
 from .enrollment_model import Enrollment
-from .course_teacher_link import CourseTeacherLink
 from .course_schedule_model import CourseSchedule
+from .announcement_model import Announcement
 
 settings = get_settings()
 
@@ -44,6 +45,7 @@ __all__ = [
     "CourseSchedule",
     "Enrollment",
     "CourseTeacherLink",
+    "Announcement",
     "init_db",
     "get_session",
     "async_engine",

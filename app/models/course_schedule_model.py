@@ -3,7 +3,7 @@ from datetime import time
 from sqlmodel import SQLModel, Field, Relationship
 
 if TYPE_CHECKING:
-    from app.models.course_model import Course
+    from .course_model import Course
 
 
 class CourseSchedule(SQLModel, table=True):

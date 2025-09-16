@@ -1,12 +1,13 @@
 from typing import TYPE_CHECKING, Optional
 from sqlmodel import SQLModel, Field, Relationship
 from datetime import datetime
-from app.models.course_teacher_link import CourseTeacherLink
+
+from .course_teacher_link import CourseTeacherLink
 
 if TYPE_CHECKING:
-    from app.models.user_model import User
-    from app.models.enrollment_model import Enrollment
-    from app.models.course_schedule_model import CourseSchedule
+    from .user_model import User
+    from .enrollment_model import Enrollment
+    from .course_schedule_model import CourseSchedule
 
 
 class Course(SQLModel, table=True):
