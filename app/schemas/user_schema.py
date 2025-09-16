@@ -1,6 +1,7 @@
 from typing import Optional
 from datetime import date
 from sqlmodel import SQLModel
+from pydantic import computed_field
 
 
 # Auth
@@ -22,8 +23,10 @@ class SignUpRequest(SQLModel):
     last_name: str
     birth_date: date
     faculty_id: Optional[int] = None
+    faculty_name: Optional[str] = None
     year_of_study: Optional[int] = None
     role_id: int = 2  # Default to student
+    role_name: Optional[str] = None
 
 
 # Me
@@ -42,7 +45,25 @@ class MeRead(UserBase):
     email: str
     birth_date: date
     faculty_id: Optional[int] = None
+    faculty_name: Optional[str] = None
     year_of_study: Optional[int] = None
+    role_id: Optional[int] = None
+    role_name: Optional[str] = None
+
+    @computed_field
+    def age(self) -> Optional[int]:
+        if not self.birth_date:
+            return None
+        today = date.today()
+        return (
+            today.year
+            - self.birth_date.year
+            - ((today.month, today.day) < (self.birth_date.month, self.birth_date.day))
+        )
+
+    @computed_field
+    def fullname(self) -> str:
+        return f"{self.first_name} {self.last_name}"
 
 
 class MeUpdate(SQLModel):
@@ -52,5 +73,6 @@ class MeUpdate(SQLModel):
     username: Optional[str] = None
     birth_date: Optional[date] = None
     faculty_id: Optional[int] = None
+    role_id: Optional[int] = None
     year_of_study: Optional[int] = None
     new_password: Optional[str] = None
