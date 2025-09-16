@@ -44,16 +44,13 @@ app/
 - Docker and Docker Compose
 - Git
 
-
 ### Default Credentials
 
-| Role | Email | Password |
-|------|-------|----------|
-| Admin | admin@camphub.com | admin123 |
-| Professor | prof.smith@camphub.com | prof123 |
-| Student | student.doe@camphub.com | student123 |
-
-
+| Role      | Email                   | Password   |
+| --------- | ----------------------- | ---------- |
+| Admin     | admin@camphub.com       | admin123   |
+| Professor | prof.smith@camphub.com  | prof123    |
+| Student   | student.doe@camphub.com | student123 |
 
 ### Step-by-Step Setup
 
@@ -98,7 +95,7 @@ app/
 
    ```bash
    # Start PostgreSQL container (database will be created automatically)
-   docker-compose up -d db
+   docker-compose up -d postgres
 
    # Verify database is running
    docker-compose ps
