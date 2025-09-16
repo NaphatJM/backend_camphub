@@ -94,8 +94,8 @@ app/
 5. **Setup PostgreSQL Database with Docker Compose**
 
    ```bash
-   # Start PostgreSQL container (database will be created automatically)
-   docker-compose up -d postgres
+   # Start PostgreSQL and pgadmin container (database will be created automatically)
+   docker-compose up -d
 
    # Verify database is running
    docker-compose ps
