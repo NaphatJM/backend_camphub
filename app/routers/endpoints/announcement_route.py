@@ -1,16 +1,18 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
 from sqlalchemy import select
 from datetime import datetime
 from app.models import get_session, Announcement
+from app.core.deps import get_current_user
 from app.schemas.announcement_schema import (
     AnnouncementRead,
     AnnouncementCreate,
     AnnouncementUpdate,
 )
 
-router = APIRouter(prefix="/annc", tags=["announcements"])
+router = APIRouter(
+    prefix="/annc", tags=["announcements"], dependencies=[Depends(get_current_user)]
+)
 
 
 @router.get("/", response_model=list[AnnouncementRead])

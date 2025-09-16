@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from app.models import User, Role, Faculty, Course, CourseSchedule, async_engine
 from app.core.security import hash_password
+from app.models.announcement_model import Announcement
 
 
 async def init_roles():
@@ -123,6 +124,52 @@ async def init_demo_users():
             print("Users already exist")
 
 
+async def init_demo_announcements():
+    async with AsyncSession(async_engine) as session:
+        result = await session.execute(select(Announcement))
+        existing_announcements = result.scalars().all()
+
+        if not existing_announcements:
+            from datetime import datetime, timedelta
+
+            now = datetime.now()
+
+            announcements = [
+                Announcement(
+                    title="Welcome to CampHub",
+                    content="We are excited to have you on our platform!",
+                    description="Official welcome message for all new users joining CampHub platform",
+                    image_url="https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=800",
+                    start_date=now,
+                    end_date=now + timedelta(days=30),
+                    created_by=1,
+                ),
+                Announcement(
+                    title="Course Registration Open",
+                    content="Register for your courses now! Don't miss the deadline.",
+                    description="Course registration for the upcoming semester is now open. Students can register through the student portal.",
+                    image_url="https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=800",
+                    start_date=now,
+                    end_date=now + timedelta(days=14),
+                    created_by=1,
+                ),
+                Announcement(
+                    title="Campus Library Hours Extended",
+                    content="Library will be open 24/7 during exam period starting next week.",
+                    description="To support students during the examination period, the campus library will extend its operating hours to 24/7 for the next two weeks.",
+                    image_url="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800",
+                    start_date=now + timedelta(days=7),
+                    end_date=now + timedelta(days=21),
+                    created_by=3,
+                ),
+            ]
+            session.add_all(announcements)
+            await session.commit()
+            print("Demo announcements created")
+        else:
+            print("Announcements already exist")
+
+
 async def init_demo_courses():
     """Initialize demo courses"""
     async with AsyncSession(async_engine) as session:
@@ -222,6 +269,7 @@ async def init_all_data():
         await init_roles()
         await init_faculties()
         await init_demo_users()
+        await init_demo_announcements()
         await init_demo_courses()
 
         print("Database initialization completed successfully!")
