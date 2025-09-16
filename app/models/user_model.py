@@ -1,6 +1,7 @@
 from typing import TYPE_CHECKING, Optional
 from datetime import date, datetime
 from sqlmodel import SQLModel, Field, Relationship
+from pydantic import computed_field
 
 from .course_teacher_link import CourseTeacherLink
 
@@ -37,3 +38,18 @@ class User(SQLModel, table=True):
     )
     enrollments: list["Enrollment"] = Relationship(back_populates="user")
     announcements: list["Announcement"] = Relationship(back_populates="creator")
+
+    @computed_field
+    def age(self) -> Optional[int]:
+        if not self.birth_date:
+            return None
+        today = date.today()
+        return (
+            today.year
+            - self.birth_date.year
+            - ((today.month, today.day) < (self.birth_date.month, self.birth_date.day))
+        )
+
+    @computed_field
+    def fullname(self) -> str:
+        return f"{self.first_name} {self.last_name}"

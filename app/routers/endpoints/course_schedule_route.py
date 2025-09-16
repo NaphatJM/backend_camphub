@@ -57,7 +57,7 @@ async def get_course_by_code(
     )
     course = result.scalar_one_or_none()
     if not course:
-        raise HTTPException(status_code=404, detail="Course not found")
+        raise HTTPException(status_code=404, detail="ไม่พบรายวิชา")
 
     schedules = [
         CourseScheduleRead(

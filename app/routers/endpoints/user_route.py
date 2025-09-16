@@ -5,6 +5,8 @@ from app.models import get_session, User
 from app.schemas.user_schema import MeRead, MeUpdate
 from app.core.deps import get_current_user
 from app.core.security import verify_password, hash_password
+from sqlalchemy.orm import joinedload
+
 
 router = APIRouter(prefix="/user", tags=["user"])
 
@@ -18,8 +20,41 @@ async def get_me(current: User = Depends(get_current_user)):
         first_name=current.first_name,
         last_name=current.last_name,
         birth_date=current.birth_date,
+        age=current.get_age,
         faculty_id=current.faculty_id,
+        faculty_name=current.faculty.name if current.faculty else None,
         year_of_study=current.year_of_study,
+        role_id=current.role_id,
+        role_name=current.role.name if current.role else None,
+    )
+
+
+@router.get("/{user_id}", response_model=MeRead)
+async def get_user_by_id(user_id: int, session: AsyncSession = Depends(get_session)):
+    result = await session.execute(
+        select(User)
+        .options(joinedload(User.role), joinedload(User.faculty))
+        .where(User.id == user_id)
+    )
+    user = result.scalars().first()
+
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    return MeRead(
+        id=user.id,
+        username=user.username,
+        email=user.email,
+        first_name=user.first_name,
+        last_name=user.last_name,
+        birth_date=user.birth_date,
+        faculty_id=user.faculty_id,
+        faculty_name=user.faculty.name if user.faculty else None,
+        year_of_study=user.year_of_study,
+        role_id=user.role_id,
+        role_name=user.role.name if user.role else None,
+        age=user.age,
+        fullname=user.fullname,
     )
 
 
@@ -60,6 +95,9 @@ async def update_me(
     if payload.faculty_id is not None:
         current.faculty_id = payload.faculty_id
 
+    if payload.role_id is not None:
+        current.role_id = payload.role_id
+
     if payload.year_of_study is not None:
         current.year_of_study = payload.year_of_study
 
@@ -78,6 +116,8 @@ async def update_me(
         first_name=current.first_name,
         last_name=current.last_name,
         birth_date=current.birth_date,
+        age=current.get_age,
         faculty_id=current.faculty_id,
+        role_id=current.role_id,
         year_of_study=current.year_of_study,
     )
