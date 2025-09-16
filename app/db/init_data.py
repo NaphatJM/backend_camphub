@@ -169,7 +169,10 @@ async def init_demo_courses():
                 ),
             ]
             session.add_all(courses)
-            await session.commit()
+            await session.flush()
+
+            for course in courses:
+                await session.refresh(course)
 
             # สร้าง schedules สำหรับแต่ละ course
             schedules = [
