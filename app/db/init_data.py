@@ -218,44 +218,6 @@ async def init_demo_courses():
             session.add_all(courses)
             await session.flush()
 
-            for course in courses:
-                await session.refresh(course)
-
-            # สร้าง schedules สำหรับแต่ละ course
-            schedules = [
-                # CS101
-                CourseSchedule(
-                    course_id=courses[0].id,
-                    day_of_week="Monday",
-                    start_time="09:00",
-                    end_time="10:30",
-                    room="B204",
-                ),
-                CourseSchedule(
-                    course_id=courses[0].id,
-                    day_of_week="Wednesday",
-                    start_time="09:00",
-                    end_time="10:30",
-                    room="B204",
-                ),
-                # CS201
-                CourseSchedule(
-                    course_id=courses[1].id,
-                    day_of_week="Tuesday",
-                    start_time="11:00",
-                    end_time="12:30",
-                    room="C101",
-                ),
-                CourseSchedule(
-                    course_id=courses[1].id,
-                    day_of_week="Thursday",
-                    start_time="11:00",
-                    end_time="12:30",
-                    room="C101",
-                ),
-            ]
-            session.add_all(schedules)
-            await session.commit()
             print("Demo courses created")
         else:
             print("Courses already exist")
