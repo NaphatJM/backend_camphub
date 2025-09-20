@@ -38,6 +38,7 @@ class UserBase(SQLModel):
 
 
 class UserSimple(UserBase):
+    profile_image_url: Optional[str] = None
     pass
 
 
@@ -49,6 +50,7 @@ class MeRead(UserBase):
     year_of_study: Optional[int] = None
     role_id: Optional[int] = None
     role_name: Optional[str] = None
+    profile_image_url: Optional[str] = None
 
     @computed_field
     def age(self) -> Optional[int]:
@@ -76,3 +78,4 @@ class MeUpdate(SQLModel):
     role_id: Optional[int] = None
     year_of_study: Optional[int] = None
     new_password: Optional[str] = None
+    profile_image_url: Optional[str] = None
