@@ -8,6 +8,7 @@ from app.core.security import verify_password, hash_password
 from sqlalchemy.orm import joinedload
 from uuid import uuid4
 import os
+import aiofiles
 from pathlib import Path
 
 
@@ -30,23 +31,34 @@ async def upload_profile_image(
         raise HTTPException(status_code=400, detail="ไฟล์ต้องมีขนาดไม่เกิน 10MB")
 
     try:
+        # Save file first
         filename = f"{uuid4().hex}_{file.filename}"
         file_path = UPLOAD_DIR / filename
 
-        with open(file_path, "wb") as f:
+        async with aiofiles.open(file_path, "wb") as f:
             content = await file.read()
-            f.write(content)
+            await f.write(content)
 
-        current_user.profile_image_url = f"/static/profile_images/{filename}"
-        session.add(current_user)
+        # Get fresh user object from database
+        result = await session.execute(select(User).where(User.id == current_user.id))
+        user = result.scalars().first()
+
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+
+        # Update profile image URL
+        user.profile_image_url = f"/static/profile_images/{filename}"
+        session.add(user)
         await session.commit()
+        await session.refresh(user)
 
         return {
             "message": "อัปโหลดรูปภาพสำเร็จ",
-            "image_url": current_user.profile_image_url,
+            "image_url": user.profile_image_url,
         }
 
     except Exception as e:
+        await session.rollback()
         raise HTTPException(
             status_code=500, detail=f"เกิดข้อผิดพลาดในการอัปโหลดไฟล์: {str(e)}"
         )
