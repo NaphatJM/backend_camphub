@@ -173,9 +173,9 @@ async def update_me(
         birth_date=current.birth_date,
         age=current.age,
         faculty_id=current.faculty_id,
-        faculty_name=current.faculty.name if current.faculty else None,
+        faculty_name=current.faculty.name,
         year_of_study=current.year_of_study,
         role_id=current.role_id,
-        role_name=current.role.name if current.role else None,
+        role_name=current.role.name,
         profile_image_url=current.profile_image_url,
     )
