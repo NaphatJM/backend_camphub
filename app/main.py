@@ -1,6 +1,7 @@
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from app.models import init_db
 from app.db.init_data import init_all_data
 from app.routers import router
@@ -25,6 +26,8 @@ app = FastAPI(
     title=settings.APP_NAME if hasattr(settings, "APP_NAME") else "CampHub API",
     lifespan=lifespan,
 )
+
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 app.add_middleware(
     CORSMiddleware,

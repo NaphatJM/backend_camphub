@@ -26,6 +26,7 @@ class User(SQLModel, table=True):
     faculty_id: Optional[int] = Field(default=None, foreign_key="faculty.id")
     year_of_study: Optional[int] = None
     role_id: int = Field(default=2, foreign_key="role.id")  # 1: Professor, 2: Student
+    profile_image_url: str | None = Field(default=None, index=True)
 
     created_at: datetime = Field(default_factory=datetime.now)
     updated_at: datetime = Field(default_factory=datetime.now)
