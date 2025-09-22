@@ -1,47 +1,36 @@
-from typing import Optional, List
+from typing import List, Optional
 from datetime import datetime
 from sqlmodel import SQLModel
-from .user_schema import UserSimple
-from .course_schema import CourseSimple
 
 
+# Base fields ของ Enrollment
 class EnrollmentBase(SQLModel):
     course_id: int
     user_id: int
+    status: Optional[str] = "enrolled"
 
 
+# สร้าง enrollment ใหม่
 class EnrollmentCreate(SQLModel):
     course_id: int
 
 
+# Update enrollment (เช่น เปลี่ยน status)
+class EnrollmentUpdate(SQLModel):
+    status: Optional[str] = None
+
+
+# Response แบบ Read
 class EnrollmentRead(EnrollmentBase):
     id: int
     enrollment_at: datetime
-    user: Optional[UserSimple] = None
-    course: Optional[CourseSimple] = None
+    # สามารถใส่ nested object ของ user และ course ได้ถ้าต้องการ
+    fullname: Optional[str] = None
+    course_name: Optional[str] = None
 
 
-class EnrollmentStatus(SQLModel):
-    is_enrolled: bool
-    enrollment_id: Optional[int] = None
-    enrollment_at: Optional[datetime] = None
-    message: str
-
-
-class EnrollmentListResponse(SQLModel):
-    enrollments: List[EnrollmentRead]
-    total: int
-    page: int
-    per_page: int
-    total_pages: int
-
-
-class StudentEnrollmentResponse(SQLModel):
-    enrolled_courses: List[CourseSimple]
-    total_credits: int
-
-
-class CourseEnrollmentResponse(SQLModel):
-    enrolled_students: List[UserSimple]
-    total_students: int
-    available_seats: int
+# Summary ของ course
+class EnrollmentSummary(SQLModel):
+    course_id: int
+    total_enrolled: int
+    enrolled_users: List[str]  # ชื่อผู้เรียน
