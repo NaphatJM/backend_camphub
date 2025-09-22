@@ -119,3 +119,4 @@ class ImageUploadService:
 # Pre-configured service instances
 profile_image_service = ImageUploadService("static/profile_images")
 event_image_service = ImageUploadService("static/event_images")
+announcement_image_service = ImageUploadService("static/announcement_images")
