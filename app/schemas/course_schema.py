@@ -36,24 +36,3 @@ class CourseSimple(SQLModel):
     course_code: str
     course_name: str
     credits: int
-
-
-class CourseReadWithDetails(CourseRead):
-    teachers: List[UserSimple] = []
-    faculty: Optional[str] = None  # Use FacultyRead schema if needed
-    is_full: bool = False
-
-
-class CourseFilter(SQLModel):
-    faculty_id: Optional[int] = None
-    credits: Optional[int] = None
-    available_only: Optional[bool] = None
-    search: Optional[str] = None
-
-
-class CourseListResponse(SQLModel):
-    courses: List[CourseRead]
-    total: int
-    page: int
-    per_page: int
-    total_pages: int
