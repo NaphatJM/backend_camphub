@@ -36,7 +36,9 @@ async def create_announcement(
     session: AsyncSession = Depends(get_session),
     current_user: User = Depends(get_current_user),
 ):
-    new_announcement = Announcement(**announcement.model_dump())
+    new_announcement = Announcement(
+        **announcement.model_dump(), created_by=current_user.id
+    )
     session.add(new_announcement)
     await session.commit()
     await session.refresh(new_announcement)

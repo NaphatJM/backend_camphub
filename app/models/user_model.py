@@ -3,6 +3,7 @@ from datetime import date, datetime
 from sqlmodel import SQLModel, Field, Relationship
 from pydantic import computed_field
 
+
 from .course_teacher_link import CourseTeacherLink
 
 if TYPE_CHECKING:
@@ -11,6 +12,7 @@ if TYPE_CHECKING:
     from .course_model import Course
     from .enrollment_model import Enrollment
     from .announcement_model import Announcement
+    from .event_model import Event
 
 
 class User(SQLModel, table=True):
@@ -39,6 +41,14 @@ class User(SQLModel, table=True):
     )
     enrollments: list["Enrollment"] = Relationship(back_populates="user")
     announcements: list["Announcement"] = Relationship(back_populates="creator")
+    created_events: list["Event"] = Relationship(
+        back_populates="creator",
+        sa_relationship_kwargs={"foreign_keys": "[Event.created_by]"},
+    )
+    updated_events: list["Event"] = Relationship(
+        back_populates="updater",
+        sa_relationship_kwargs={"foreign_keys": "[Event.updated_by]"},
+    )
 
     @computed_field
     def age(self) -> Optional[int]:
