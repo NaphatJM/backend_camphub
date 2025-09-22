@@ -3,9 +3,10 @@ from .endpoints import (
     auth_route,
     user_route,
     faculty_route,
-    course_schedule_route,
     announcement_route,
     courses_route,
+    enrollment_route,
+    # course_schedule_route,
 )
 
 router = APIRouter(prefix="/api")
@@ -13,6 +14,7 @@ router = APIRouter(prefix="/api")
 router.include_router(auth_route.router)
 router.include_router(user_route.router)
 router.include_router(faculty_route.router)
-router.include_router(course_schedule_route.router)
 router.include_router(announcement_route.router)
 router.include_router(courses_route.router)
+router.include_router(enrollment_route.router)
+# router.include_router(course_schedule_route.router)
