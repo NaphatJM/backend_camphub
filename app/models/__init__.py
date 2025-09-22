@@ -12,6 +12,8 @@ from .course_model import Course
 from .enrollment_model import Enrollment
 from .course_schedule_model import CourseSchedule
 from .announcement_model import Announcement
+from .event_model import Event
+from .event_enrollment_model import EventEnrollment
 
 settings = get_settings()
 
@@ -46,6 +48,8 @@ __all__ = [
     "Enrollment",
     "CourseTeacherLink",
     "Announcement",
+    "Event",
+    "EventEnrollment",
     "init_db",
     "get_session",
     "async_engine",

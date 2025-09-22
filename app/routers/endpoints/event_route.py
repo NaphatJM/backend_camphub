@@ -11,11 +11,13 @@ from fastapi import (
 )
 from sqlmodel import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import and_
 from datetime import datetime
 import math
 
 from app.models import get_session
 from app.models.event_model import Event
+from app.models.event_enrollment_model import EventEnrollment
 from app.models.user_model import User
 from app.schemas.event_schema import (
     EventCreate,
@@ -37,6 +39,8 @@ async def create_event(
     description: Optional[str] = Form(None),
     start_date: datetime = Form(...),
     end_date: datetime = Form(...),
+    capacity: Optional[int] = Form(None),
+    is_active: bool = Form(True),
     image: Optional[UploadFile] = File(None),
     current_user: User = Depends(get_current_user),
     session: AsyncSession = Depends(get_session),
@@ -64,6 +68,8 @@ async def create_event(
         description=description,
         start_date=start_date,
         end_date=end_date,
+        capacity=capacity,
+        is_active=is_active,
         image_url=image_url,
         created_by=current_user.id,
         updated_by=current_user.id,
@@ -84,120 +90,55 @@ async def create_event(
         )
 
 
-@router.post("/{event_id}/upload-image")
-async def upload_event_image(
-    event_id: int,
-    image: UploadFile = File(...),
-    current_user: User = Depends(get_current_user),
-    session: AsyncSession = Depends(get_session),
-):
-    """Upload image for an existing event"""
-
-    # Get event
-    event = await session.get(Event, event_id)
-    if not event:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="ไม่พบกิจกรรมนี้")
-
-    # Check if user has permission to update this event
-    if event.created_by != current_user.id:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="คุณไม่มีสิทธิ์แก้ไขกิจกรรมนี้"
-        )
-
-    try:
-        # Replace image using service
-        image_url, _ = await event_image_service.replace_image(
-            image, event.image_url, "event"
-        )
-
-        # Update event image URL
-        event.image_url = image_url
-        event.updated_by = current_user.id
-        event.updated_at = datetime.now()
-
-        session.add(event)
-        await session.commit()
-        await session.refresh(event)
-
-        return {
-            "message": "อัปโหลดรูปภาพกิจกรรมสำเร็จ",
-            "image_url": event.image_url,
-        }
-
-    except HTTPException:
-        raise
-    except Exception as e:
-        await session.rollback()
-        raise HTTPException(
-            status_code=500, detail=f"เกิดข้อผิดพลาดในการอัปโหลดไฟล์: {str(e)}"
-        )
-
-
-@router.delete("/{event_id}/image")
-async def delete_event_image(
-    event_id: int,
-    current_user: User = Depends(get_current_user),
-    session: AsyncSession = Depends(get_session),
-):
-    """Delete image of an existing event"""
-
-    # Get event
-    event = await session.get(Event, event_id)
-    if not event:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="ไม่พบกิจกรรมนี้")
-
-    # Check if user has permission to update this event
-    if event.created_by != current_user.id:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="คุณไม่มีสิทธิ์แก้ไขกิจกรรมนี้"
-        )
-
-    if not event.image_url:
-        raise HTTPException(status_code=400, detail="กิจกรรมนี้ไม่มีรูปภาพ")
-
-    try:
-        # Delete image using service
-        event_image_service.delete_image(event.image_url)
-
-        # Update event
-        event.image_url = None
-        event.updated_by = current_user.id
-        event.updated_at = datetime.now()
-
-        session.add(event)
-        await session.commit()
-
-        return {"message": "ลบรูปภาพกิจกรรมสำเร็จ"}
-
-    except Exception as e:
-        await session.rollback()
-        raise HTTPException(
-            status_code=500, detail=f"เกิดข้อผิดพลาดในการลบรูปภาพ: {str(e)}"
-        )
-
-
 @router.get("/", response_model=EventListPaginationResponse)
 async def get_events(
     page: int = Query(1, ge=1, description="หมายเลขหน้า"),
     per_page: int = Query(10, ge=1, le=100, description="จำนวนรายการต่อหน้า"),
+    created_by: Optional[int] = Query(None),
+    is_active: Optional[bool] = Query(None),
+    q: Optional[str] = Query(None, description="ค้นหาชื่อกิจกรรม"),
+    date_from: Optional[datetime] = Query(None),
+    date_to: Optional[datetime] = Query(None),
+    include_enrolled_count: bool = Query(True),
     session: AsyncSession = Depends(get_session),
 ):
     """Get all events with pagination"""
-    # Count total events
-    count_statement = select(func.count(Event.id))
-    count_result = await session.execute(count_statement)
-    total = count_result.scalar_one()
+    filters = []
+    if created_by is not None:
+        filters.append(Event.created_by == created_by)
+    if is_active is not None:
+        filters.append(Event.is_active == is_active)
+    if q:
+        filters.append(func.lower(Event.title).like(f"%{q.lower()}%"))
+    if date_from:
+        filters.append(Event.start_date >= date_from)
+    if date_to:
+        filters.append(Event.end_date <= date_to)
 
-    # Calculate pagination values
-    total_pages = math.ceil(total / per_page)
+    base_stmt = select(Event)
+    if filters:
+        base_stmt = base_stmt.where(and_(*filters))
+
+    count_stmt = select(func.count()).select_from(base_stmt.subquery())
+    total = (await session.execute(count_stmt)).scalar_one()
+
+    total_pages = math.ceil(total / per_page) if total else 1
     offset = (page - 1) * per_page
 
-    # Get events for current page
-    statement = (
-        select(Event).offset(offset).limit(per_page).order_by(Event.created_at.desc())
-    )
-    result = await session.execute(statement)
-    events = result.scalars().all()
+    stmt = base_stmt.order_by(Event.created_at.desc()).offset(offset).limit(per_page)
+    events = (await session.execute(stmt)).scalars().all()
+
+    if include_enrolled_count and events:
+        event_ids = [e.id for e in events]
+        counts_stmt = (
+            select(EventEnrollment.event_id, func.count(EventEnrollment.id).label("c"))
+            .where(EventEnrollment.event_id.in_(event_ids))
+            .group_by(EventEnrollment.event_id)
+        )
+        rows = await session.execute(counts_stmt)
+        counts_map = {r.event_id: r.c for r in rows}
+        for e in events:
+            setattr(e, "enrolled_count", counts_map.get(e.id, 0))
 
     return EventListPaginationResponse(
         items=events,
@@ -215,13 +156,25 @@ async def get_event_by_id(event_id: int, session: AsyncSession = Depends(get_ses
     event = await session.get(Event, event_id)
     if not event:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="ไม่พบกิจกรรมนี้")
+
+    # attach enrolled_count
+    result = await session.execute(
+        select(func.count(EventEnrollment.id)).where(
+            EventEnrollment.event_id == event_id
+        )
+    )
+    enrolled_count = result.scalar_one()
+    setattr(event, "enrolled_count", enrolled_count)
+
     return event
 
 
-@router.put("/{event_id}", response_model=EventResponse)
-async def update_event(
+@router.patch("/{event_id}", response_model=EventResponse)
+async def patch_event(
     event_id: int,
-    event_data: EventUpdate,
+    event_data: EventUpdate = Depends(),
+    image: Optional[UploadFile] = File(None),
+    remove_image: bool = Form(False),
     current_user: User = Depends(get_current_user),
     session: AsyncSession = Depends(get_session),
 ):
@@ -229,34 +182,38 @@ async def update_event(
     if not event:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="ไม่พบกิจกรรมนี้")
 
-    # Update only provided fields
+    if event.created_by != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="คุณไม่มีสิทธิ์แก้ไขกิจกรรมนี้"
+        )
+
     update_data = event_data.model_dump(exclude_unset=True)
 
-    # Convert timezone-aware datetime to naive datetime for database
     if "start_date" in update_data:
         update_data["start_date"] = make_naive_datetime(update_data["start_date"])
     if "end_date" in update_data:
         update_data["end_date"] = make_naive_datetime(update_data["end_date"])
 
-    # Validate datetime range if both dates are provided
-    if "start_date" in update_data and "end_date" in update_data:
+    if ("start_date" in update_data) or ("end_date" in update_data):
         try:
-            validate_datetime_range(update_data["start_date"], update_data["end_date"])
-        except ValueError as e:
-            raise HTTPException(status_code=400, detail=str(e))
-    elif "start_date" in update_data and event.end_date:
-        try:
-            validate_datetime_range(update_data["start_date"], event.end_date)
-        except ValueError as e:
-            raise HTTPException(status_code=400, detail=str(e))
-    elif "end_date" in update_data and event.start_date:
-        try:
-            validate_datetime_range(event.start_date, update_data["end_date"])
+            validate_datetime_range(
+                update_data.get("start_date", event.start_date),
+                update_data.get("end_date", event.end_date),
+            )
         except ValueError as e:
             raise HTTPException(status_code=400, detail=str(e))
 
     for field, value in update_data.items():
         setattr(event, field, value)
+
+    if image:
+        new_url, _ = await event_image_service.replace_image(
+            image, event.image_url, "event"
+        )
+        event.image_url = new_url
+    elif remove_image and event.image_url:
+        event_image_service.delete_image(event.image_url)
+        event.image_url = None
 
     event.updated_by = current_user.id
     event.updated_at = datetime.now()
@@ -264,6 +221,14 @@ async def update_event(
     session.add(event)
     await session.commit()
     await session.refresh(event)
+
+    result = await session.execute(
+        select(func.count(EventEnrollment.id)).where(
+            EventEnrollment.event_id == event_id
+        )
+    )
+    setattr(event, "enrolled_count", result.scalar_one())
+
     return event
 
 
@@ -277,45 +242,11 @@ async def delete_event(
     if not event:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="ไม่พบกิจกรรมนี้")
 
+    if event.created_by != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="คุณไม่มีสิทธิ์ลบกิจกรรมนี้"
+        )
+
     await session.delete(event)
     await session.commit()
     return None
-
-
-@router.get("/user/{user_id}", response_model=EventListPaginationResponse)
-async def get_user_events(
-    user_id: int,
-    page: int = Query(1, ge=1, description="หมายเลขหน้า"),
-    per_page: int = Query(10, ge=1, le=100, description="จำนวนรายการต่อหน้า"),
-    session: AsyncSession = Depends(get_session),
-):
-    """Get all events created by a specific user with pagination"""
-    # Count total events for the user
-    count_statement = select(func.count(Event.id)).where(Event.created_by == user_id)
-    count_result = await session.execute(count_statement)
-    total = count_result.scalar_one()
-
-    # Calculate pagination values
-    total_pages = math.ceil(total / per_page)
-    offset = (page - 1) * per_page
-
-    # Get events for current page
-    statement = (
-        select(Event)
-        .where(Event.created_by == user_id)
-        .offset(offset)
-        .limit(per_page)
-        .order_by(Event.created_at.desc())
-    )
-    result = await session.execute(statement)
-    events = result.scalars().all()
-
-    return EventListPaginationResponse(
-        items=events,
-        total=total,
-        page=page,
-        per_page=per_page,
-        total_pages=total_pages,
-        has_next=page < total_pages,
-        has_prev=page > 1,
-    )

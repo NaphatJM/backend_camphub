@@ -13,6 +13,7 @@ if TYPE_CHECKING:
     from .enrollment_model import Enrollment
     from .announcement_model import Announcement
     from .event_model import Event
+    from .event_enrollment_model import EventEnrollment
 
 
 class User(SQLModel, table=True):
@@ -49,6 +50,7 @@ class User(SQLModel, table=True):
         back_populates="updater",
         sa_relationship_kwargs={"foreign_keys": "[Event.updated_by]"},
     )
+    event_enrollments: list["EventEnrollment"] = Relationship(back_populates="user")
 
     @computed_field
     def age(self) -> Optional[int]:
