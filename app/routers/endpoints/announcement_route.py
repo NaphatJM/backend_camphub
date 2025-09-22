@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from datetime import datetime
-from app.models import get_session, Announcement
+from app.models import get_session, Announcement, User
 from app.core.deps import get_current_user
 from app.schemas.announcement_schema import (
     AnnouncementRead,
@@ -10,9 +10,7 @@ from app.schemas.announcement_schema import (
     AnnouncementUpdate,
 )
 
-router = APIRouter(
-    prefix="/annc", tags=["announcements"], dependencies=[Depends(get_current_user)]
-)
+router = APIRouter(prefix="/annc", tags=["announcements"])
 
 
 @router.get("/", response_model=list[AnnouncementRead])
@@ -34,7 +32,9 @@ async def get_announcement_by_id(
 
 @router.post("/", response_model=AnnouncementRead)
 async def create_announcement(
-    announcement: AnnouncementCreate, session: AsyncSession = Depends(get_session)
+    announcement: AnnouncementCreate,
+    session: AsyncSession = Depends(get_session),
+    current_user: User = Depends(get_current_user),
 ):
     new_announcement = Announcement(**announcement.model_dump())
     session.add(new_announcement)
@@ -48,16 +48,13 @@ async def update_announcement(
     announcement_id: int,
     announcement_update: AnnouncementUpdate,
     session: AsyncSession = Depends(get_session),
+    current_user: User = Depends(get_current_user),
 ):
-    """
-    Update an existing announcement.
-    """
-    # Get the existing announcement
+
     announcement = await session.get(Announcement, announcement_id)
     if not announcement:
         raise HTTPException(status_code=404, detail="ไม่พบข่าวประกาศ")
 
-    # Update only the fields that were provided
     update_data = announcement_update.model_dump(exclude_unset=True)
     if update_data:
         for field, value in update_data.items():
@@ -72,7 +69,9 @@ async def update_announcement(
 
 @router.delete("/{announcement_id}")
 async def delete_announcement(
-    announcement_id: int, session: AsyncSession = Depends(get_session)
+    announcement_id: int,
+    session: AsyncSession = Depends(get_session),
+    current_user: User = Depends(get_current_user),
 ):
     announcement = await session.get(Announcement, announcement_id)
     if not announcement:
