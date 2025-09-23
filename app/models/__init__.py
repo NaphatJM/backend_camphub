@@ -1,7 +1,4 @@
-from typing import AsyncIterator
 from sqlmodel import SQLModel
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
-from app.core.config import get_settings
 
 # Models
 from .faculty_model import Faculty
@@ -15,30 +12,7 @@ from .announcement_model import Announcement
 from .event_model import Event
 from .event_enrollment_model import EventEnrollment
 
-settings = get_settings()
-
-# ✅ Async engine
-async_engine = create_async_engine(
-    settings.SQLDB_URL,
-    echo=False,
-    future=True,
-)
-
-
-# Initialize all tables
-async def init_db():
-    async with async_engine.begin() as conn:
-        # สร้างทุก table จาก metadata ของ SQLModel
-        await conn.run_sync(SQLModel.metadata.create_all)
-
-
-# Async session generator
-async def get_session() -> AsyncIterator[AsyncSession]:
-    async with AsyncSession(async_engine) as session:
-        yield session
-
-
-# __all__ สำหรับ import แบบ *
+# __all__ สำหรับ import *
 __all__ = [
     "User",
     "Faculty",
@@ -50,7 +24,4 @@ __all__ = [
     "Announcement",
     "Event",
     "EventEnrollment",
-    "init_db",
-    "get_session",
-    "async_engine",
 ]
