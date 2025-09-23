@@ -1,7 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-from app.models import get_session, User
+from app.core.db import get_session
+from app.models import User
 from app.schemas.user_schema import MeRead, MeUpdate
 from app.core.deps import get_current_user
 from app.core.security import verify_password, hash_password

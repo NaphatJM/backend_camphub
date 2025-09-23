@@ -1,7 +1,8 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-from app.models import get_session, Faculty
+from app.core.db import get_session
+from app.models import Faculty
 from app.schemas.faculty_schema import FacultyRead
 
 router = APIRouter(prefix="/faculty", tags=["faculty"])

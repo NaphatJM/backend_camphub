@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.models import get_session, User
+from app.core.db import get_session
+from app.models import User
 from app.core.deps import get_current_user
 from app.schemas.event_enrollment_schema import EventEnrollmentCreate
 from app.services.event_enrollment_service import EventEnrollmentService
