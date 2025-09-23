@@ -5,17 +5,11 @@ from app.models import get_session, User
 from app.schemas.user_schema import MeRead, MeUpdate
 from app.core.deps import get_current_user
 from app.core.security import verify_password, hash_password
+from app.services import profile_image_service
 from sqlalchemy.orm import joinedload
-from uuid import uuid4
-import os
-import aiofiles
-from pathlib import Path
 
 
 router = APIRouter(prefix="/user", tags=["user"])
-
-UPLOAD_DIR = Path("static/profile_images")
-UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
 
 @router.post("/upload-profile-image")
@@ -24,20 +18,11 @@ async def upload_profile_image(
     current_user: User = Depends(get_current_user),
     session: AsyncSession = Depends(get_session),
 ):
-    if not file.content_type or not file.content_type.startswith("image/"):
-        raise HTTPException(status_code=400, detail="ไฟล์ต้องเป็นรูปภาพเท่านั้น")
-
-    if file.size and file.size > 10 * 1024 * 1024:
-        raise HTTPException(status_code=400, detail="ไฟล์ต้องมีขนาดไม่เกิน 10MB")
-
     try:
-        # Save file first
-        filename = f"{uuid4().hex}_{file.filename}"
-        file_path = UPLOAD_DIR / filename
-
-        async with aiofiles.open(file_path, "wb") as f:
-            content = await file.read()
-            await f.write(content)
+        # Upload image using service
+        image_url, _ = await profile_image_service.replace_image(
+            file, current_user.profile_image_url, "profile"
+        )
 
         # Get fresh user object from database
         result = await session.execute(select(User).where(User.id == current_user.id))
@@ -47,7 +32,7 @@ async def upload_profile_image(
             raise HTTPException(status_code=404, detail="User not found")
 
         # Update profile image URL
-        user.profile_image_url = f"/static/profile_images/{filename}"
+        user.profile_image_url = image_url
         session.add(user)
         await session.commit()
         await session.refresh(user)
@@ -57,6 +42,8 @@ async def upload_profile_image(
             "image_url": user.profile_image_url,
         }
 
+    except HTTPException:
+        raise
     except Exception as e:
         await session.rollback()
         raise HTTPException(

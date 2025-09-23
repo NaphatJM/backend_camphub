@@ -1,4 +1,5 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from typing import Optional
+from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Form
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from datetime import datetime
@@ -9,6 +10,8 @@ from app.schemas.announcement_schema import (
     AnnouncementCreate,
     AnnouncementUpdate,
 )
+from app.services import announcement_image_service
+from app.utils import make_naive_datetime, validate_datetime_range
 
 router = APIRouter(prefix="/annc", tags=["announcements"])
 
@@ -30,17 +33,56 @@ async def get_announcement_by_id(
     return announcement
 
 
-@router.post("/", response_model=AnnouncementRead)
+@router.post("/", response_model=AnnouncementRead, status_code=status.HTTP_201_CREATED)
 async def create_announcement(
-    announcement: AnnouncementCreate,
-    session: AsyncSession = Depends(get_session),
+    title: str = Form(...),
+    description: str = Form(...),
+    start_date: datetime = Form(...),
+    end_date: datetime = Form(...),
+    image: Optional[UploadFile] = File(None),
     current_user: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_session),
 ):
-    new_announcement = Announcement(**announcement.model_dump())
-    session.add(new_announcement)
-    await session.commit()
-    await session.refresh(new_announcement)
-    return new_announcement
+
+    # Convert timezone-aware datetime to naive datetime for database
+    start_date = make_naive_datetime(start_date)
+    end_date = make_naive_datetime(end_date)
+
+    # Validate datetime range
+    try:
+        validate_datetime_range(start_date, end_date)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+    # Handle image upload if provided
+    image_url = None
+    if image:
+        image_url, _ = await announcement_image_service.save_image(
+            image, "announcement"
+        )
+
+    new_announcement = Announcement(
+        title=title,
+        description=description,
+        start_date=start_date,
+        end_date=end_date,
+        image_url=image_url,
+        created_by=current_user.id,
+    )
+
+    try:
+        session.add(new_announcement)
+        await session.commit()
+        await session.refresh(new_announcement)
+        return new_announcement
+
+    except Exception as e:
+        await session.rollback()
+        if image_url:
+            announcement_image_service.delete_image(image_url)
+        raise HTTPException(
+            status_code=500, detail=f"เกิดข้อผิดพลาดในการสร้างข่าวประกาศ: {str(e)}"
+        )
 
 
 @router.put("/{announcement_id}", response_model=AnnouncementRead)
@@ -56,6 +98,23 @@ async def update_announcement(
         raise HTTPException(status_code=404, detail="ไม่พบข่าวประกาศ")
 
     update_data = announcement_update.model_dump(exclude_unset=True)
+
+    # Convert timezone-aware datetime to naive datetime for database
+    if "start_date" in update_data:
+        update_data["start_date"] = make_naive_datetime(update_data["start_date"])
+    if "end_date" in update_data:
+        update_data["end_date"] = make_naive_datetime(update_data["end_date"])
+
+    # Validate datetime range if dates are being updated
+    if "start_date" in update_data or "end_date" in update_data:
+        try:
+            validate_datetime_range(
+                update_data.get("start_date", announcement.start_date),
+                update_data.get("end_date", announcement.end_date),
+            )
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e))
+
     if update_data:
         for field, value in update_data.items():
             setattr(announcement, field, value)
@@ -76,6 +135,10 @@ async def delete_announcement(
     announcement = await session.get(Announcement, announcement_id)
     if not announcement:
         raise HTTPException(status_code=404, detail="ไม่พบข่าวประกาศ")
+
+    # Delete associated image if exists
+    if announcement.image_url:
+        announcement_image_service.delete_image(announcement.image_url)
 
     await session.delete(announcement)
     await session.commit()
