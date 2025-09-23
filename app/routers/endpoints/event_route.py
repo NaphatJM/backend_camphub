@@ -14,8 +14,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import and_
 from datetime import datetime
 
-from app.models import get_session
-from app.models.event_model import Event
+from app.core.db import get_session
+from app.models import Event
 from app.models.event_enrollment_model import EventEnrollment
 from app.models.user_model import User
 from app.schemas.event_schema import (

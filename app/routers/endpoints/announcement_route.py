@@ -3,7 +3,8 @@ from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File,
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from datetime import datetime
-from app.models import get_session, Announcement, User
+from app.core.db import get_session
+from app.models import Announcement, User
 from app.core.deps import get_current_user
 from app.schemas.announcement_schema import (
     AnnouncementRead,
