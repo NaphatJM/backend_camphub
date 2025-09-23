@@ -67,6 +67,8 @@ class EventEnrollmentService:
                 user_id=existing.user_id,
                 status=existing.status,
                 enrollment_at=existing.enrollment_at,
+                fullname=self.current_user.fullname,
+                title=event.title,
             )
 
         new_enrollment = EventEnrollment(
@@ -81,6 +83,8 @@ class EventEnrollmentService:
             user_id=new_enrollment.user_id,
             status=new_enrollment.status,
             enrollment_at=new_enrollment.enrollment_at,
+            fullname=self.current_user.fullname,
+            title=event.title,
         )
 
     async def cancel(self, event_id: int) -> dict:

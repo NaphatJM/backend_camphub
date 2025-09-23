@@ -13,7 +13,6 @@ from sqlmodel import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import and_
 from datetime import datetime
-import math
 
 from app.models import get_session
 from app.models.event_model import Event
@@ -24,7 +23,6 @@ from app.schemas.event_schema import (
     EventUpdate,
     EventResponse,
     EventListResponse,
-    EventListPaginationResponse,
 )
 from app.core.deps import get_current_user
 from app.services import event_image_service
@@ -79,7 +77,9 @@ async def create_event(
         session.add(event)
         await session.commit()
         await session.refresh(event)
-        return event
+
+        # Create response from event object
+        return EventResponse.model_validate(event.__dict__ | {"enrolled_count": 0})
     except Exception as e:
         await session.rollback()
         # Clean up uploaded file if event creation fails
@@ -90,10 +90,8 @@ async def create_event(
         )
 
 
-@router.get("/", response_model=EventListPaginationResponse)
+@router.get("/", response_model=List[EventListResponse])
 async def get_events(
-    page: int = Query(1, ge=1, description="หมายเลขหน้า"),
-    per_page: int = Query(10, ge=1, le=100, description="จำนวนรายการต่อหน้า"),
     created_by: Optional[int] = Query(None),
     is_active: Optional[bool] = Query(None),
     q: Optional[str] = Query(None, description="ค้นหาชื่อกิจกรรม"),
@@ -102,7 +100,7 @@ async def get_events(
     include_enrolled_count: bool = Query(True),
     session: AsyncSession = Depends(get_session),
 ):
-    """Get all events with pagination"""
+    """Get all events"""
     filters = []
     if created_by is not None:
         filters.append(Event.created_by == created_by)
@@ -115,19 +113,15 @@ async def get_events(
     if date_to:
         filters.append(Event.end_date <= date_to)
 
-    base_stmt = select(Event)
+    stmt = select(Event)
     if filters:
-        base_stmt = base_stmt.where(and_(*filters))
+        stmt = stmt.where(and_(*filters))
 
-    count_stmt = select(func.count()).select_from(base_stmt.subquery())
-    total = (await session.execute(count_stmt)).scalar_one()
-
-    total_pages = math.ceil(total / per_page) if total else 1
-    offset = (page - 1) * per_page
-
-    stmt = base_stmt.order_by(Event.created_at.desc()).offset(offset).limit(per_page)
+    stmt = stmt.order_by(Event.created_at.desc())
     events = (await session.execute(stmt)).scalars().all()
 
+    # Convert to response format with enrolled_count
+    response_items = []
     if include_enrolled_count and events:
         event_ids = [e.id for e in events]
         counts_stmt = (
@@ -137,18 +131,20 @@ async def get_events(
         )
         rows = await session.execute(counts_stmt)
         counts_map = {r.event_id: r.c for r in rows}
-        for e in events:
-            setattr(e, "enrolled_count", counts_map.get(e.id, 0))
 
-    return EventListPaginationResponse(
-        items=events,
-        total=total,
-        page=page,
-        per_page=per_page,
-        total_pages=total_pages,
-        has_next=page < total_pages,
-        has_prev=page > 1,
-    )
+        for e in events:
+            response_items.append(
+                EventListResponse.model_validate(
+                    e.__dict__ | {"enrolled_count": counts_map.get(e.id, 0)}
+                )
+            )
+    else:
+        for e in events:
+            response_items.append(
+                EventListResponse.model_validate(e.__dict__ | {"enrolled_count": 0})
+            )
+
+    return response_items
 
 
 @router.get("/{event_id}", response_model=EventResponse)
@@ -157,20 +153,21 @@ async def get_event_by_id(event_id: int, session: AsyncSession = Depends(get_ses
     if not event:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="ไม่พบกิจกรรมนี้")
 
-    # attach enrolled_count
+    # Get enrolled_count
     result = await session.execute(
         select(func.count(EventEnrollment.id)).where(
             EventEnrollment.event_id == event_id
         )
     )
     enrolled_count = result.scalar_one()
-    setattr(event, "enrolled_count", enrolled_count)
 
-    return event
+    return EventResponse.model_validate(
+        event.__dict__ | {"enrolled_count": enrolled_count}
+    )
 
 
-@router.patch("/{event_id}", response_model=EventResponse)
-async def patch_event(
+@router.put("/{event_id}", response_model=EventResponse)
+async def update_event(
     event_id: int,
     event_data: EventUpdate = Depends(),
     image: Optional[UploadFile] = File(None),
@@ -227,9 +224,11 @@ async def patch_event(
             EventEnrollment.event_id == event_id
         )
     )
-    setattr(event, "enrolled_count", result.scalar_one())
+    enrolled_count = result.scalar_one()
 
-    return event
+    return EventResponse.model_validate(
+        event.__dict__ | {"enrolled_count": enrolled_count}
+    )
 
 
 @router.delete("/{event_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -249,4 +248,4 @@ async def delete_event(
 
     await session.delete(event)
     await session.commit()
-    return None
+    return {"message": "ลบข่าวประกาศเรียบร้อยแล้ว"}

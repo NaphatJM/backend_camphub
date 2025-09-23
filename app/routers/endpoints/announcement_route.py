@@ -98,6 +98,23 @@ async def update_announcement(
         raise HTTPException(status_code=404, detail="ไม่พบข่าวประกาศ")
 
     update_data = announcement_update.model_dump(exclude_unset=True)
+
+    # Convert timezone-aware datetime to naive datetime for database
+    if "start_date" in update_data:
+        update_data["start_date"] = make_naive_datetime(update_data["start_date"])
+    if "end_date" in update_data:
+        update_data["end_date"] = make_naive_datetime(update_data["end_date"])
+
+    # Validate datetime range if dates are being updated
+    if "start_date" in update_data or "end_date" in update_data:
+        try:
+            validate_datetime_range(
+                update_data.get("start_date", announcement.start_date),
+                update_data.get("end_date", announcement.end_date),
+            )
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e))
+
     if update_data:
         for field, value in update_data.items():
             setattr(announcement, field, value)

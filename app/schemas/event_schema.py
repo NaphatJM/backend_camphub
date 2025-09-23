@@ -1,8 +1,6 @@
-from typing import Optional, List, Generic, TypeVar
+from typing import Optional
 from pydantic import BaseModel
 from datetime import datetime
-
-T = TypeVar("T")
 
 
 class EventBase(BaseModel):
@@ -10,9 +8,9 @@ class EventBase(BaseModel):
     description: Optional[str] = None
     start_date: datetime
     end_date: datetime
-    image_url: Optional[str] = None
     capacity: Optional[int] = None
     is_active: bool = True
+    image_url: Optional[str] = None
 
 
 class EventCreate(EventBase):
@@ -24,7 +22,6 @@ class EventUpdate(BaseModel):
     description: Optional[str] = None
     start_date: Optional[datetime] = None
     end_date: Optional[datetime] = None
-    image_url: Optional[str] = None
     capacity: Optional[int] = None
     is_active: Optional[bool] = None
 
@@ -35,7 +32,7 @@ class EventResponse(EventBase):
     created_at: datetime
     updated_by: int
     updated_at: datetime
-    enrolled_count: int = 0  # เพิ่มจำนวนผู้ลงทะเบียน
+    enrolled_count: int = 0
 
     class Config:
         from_attributes = True
@@ -44,27 +41,14 @@ class EventResponse(EventBase):
 class EventListResponse(BaseModel):
     id: int
     title: str
+    description: Optional[str] = None
     start_date: datetime
     end_date: datetime
-    image_url: Optional[str] = None
-    created_by: int
     capacity: Optional[int] = None
     is_active: bool = True
-    enrolled_count: int = 0  # เพิ่มจำนวนผู้ลงทะเบียน
+    image_url: Optional[str] = None
+    created_by: int
+    enrolled_count: int = 0
 
     class Config:
         from_attributes = True
-
-
-class PaginationResponse(BaseModel, Generic[T]):
-    items: List[T]
-    total: int
-    page: int
-    per_page: int
-    total_pages: int
-    has_next: bool
-    has_prev: bool
-
-
-class EventListPaginationResponse(PaginationResponse[EventListResponse]):
-    pass
