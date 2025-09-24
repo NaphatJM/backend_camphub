@@ -7,7 +7,7 @@ from .endpoints import (
     event_route,
     courses_route,
     enrollment_route,
-    # course_schedule_route,
+    course_schedule_route,
     event_enrollment_route,
 )
 
@@ -21,5 +21,4 @@ router.include_router(event_route.router)
 router.include_router(event_enrollment_route.router)
 router.include_router(courses_route.router)
 router.include_router(enrollment_route.router)
-
-# router.include_router(course_schedule_route.router)
+router.include_router(course_schedule_route.router)
