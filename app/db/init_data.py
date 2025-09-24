@@ -2,10 +2,11 @@
 Database initialization and seeding script
 """
 
-from datetime import date
+from datetime import date, datetime, time
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-from app.models import User, Role, Faculty, Course, CourseSchedule, async_engine
+from app.core.db import async_engine
+from app.models import User, Role, Faculty, Course, CourseSchedule
 from app.core.security import hash_password
 from app.models.announcement_model import Announcement
 
@@ -171,56 +172,97 @@ async def init_demo_announcements():
 
 
 async def init_demo_courses():
-    """Initialize demo courses"""
     async with AsyncSession(async_engine) as session:
-        # Check if courses already exist
+        # --- ตรวจว่ามี course อยู่แล้วไหม ---
         result = await session.execute(select(Course))
         existing_courses = result.scalars().all()
 
-        if not existing_courses:
-            courses = [
-                Course(
-                    course_code="CS101",
-                    course_name="Introduction to Programming",
-                    credits=3,
-                    available_seats=40,
-                    description="Learn the basics of programming using Python",
-                ),
-                Course(
-                    course_code="CS201",
-                    course_name="Data Structures and Algorithms",
-                    credits=3,
-                    available_seats=35,
-                    description="Advanced programming concepts and algorithms",
-                ),
-                Course(
-                    course_code="CS301",
-                    course_name="Database Systems",
-                    credits=3,
-                    available_seats=30,
-                    description="Database design and management",
-                ),
-                Course(
-                    course_code="ENG101",
-                    course_name="Engineering Mathematics",
-                    credits=4,
-                    available_seats=50,
-                    description="Mathematical foundations for engineering",
-                ),
-                Course(
-                    course_code="WEB201",
-                    course_name="Web Development",
-                    credits=3,
-                    available_seats=25,
-                    description="Full-stack web development with modern frameworks",
-                ),
-            ]
-            session.add_all(courses)
-            await session.flush()
-
-            print("Demo courses created")
-        else:
+        if existing_courses:
             print("Courses already exist")
+            return
+
+        # --- หา teacher id=2 ---
+        result = await session.execute(select(User).where(User.id == 2))
+        teacher = result.scalars().first()
+        if not teacher:
+            print("❌ ไม่พบ User id=2 ที่เป็น teacher, seed ไม่สำเร็จ")
+            return
+
+        # --- สร้าง courses ---
+        course1 = Course(
+            course_code="CS101",
+            course_name="Introduction to Computer Science",
+            credits=3,
+            available_seats=50,
+            description="พื้นฐานการเขียนโปรแกรมและโครงสร้างข้อมูลเบื้องต้น",
+            created_at=datetime.now(),
+        )
+        course2 = Course(
+            course_code="MA201",
+            course_name="Advanced Mathematics",
+            credits=4,
+            available_seats=40,
+            description="คณิตศาสตร์ระดับสูงสำหรับวิศวกรรม",
+            created_at=datetime.now(),
+        )
+        course3 = Course(
+            course_code="PHY301",
+            course_name="Physics for Engineers",
+            credits=3,
+            available_seats=35,
+            description="ฟิสิกส์ประยุกต์สำหรับวิศวกรรม",
+            created_at=datetime.now(),
+        )
+
+        # --- ผูก teacher id=2 เข้ากับทุก course ---
+        for c in [course1, course2, course3]:
+            c.teachers.append(teacher)
+
+        session.add_all([course1, course2, course3])
+        await session.flush()  # เพื่อให้ได้ course.id ก่อนสร้าง schedule
+
+        # --- เพิ่ม CourseSchedule ---
+        schedules = [
+            CourseSchedule(
+                course_id=course1.id,
+                day_of_week="Monday",
+                start_time=time(9, 0),
+                end_time=time(11, 0),
+                room="Room A101",
+            ),
+            CourseSchedule(
+                course_id=course1.id,
+                day_of_week="Monday",
+                start_time=time(13, 0),
+                end_time=time(15, 0),
+                room="Room A101",
+            ),
+            CourseSchedule(
+                course_id=course1.id,
+                day_of_week="Friday",
+                start_time=time(9, 0),
+                end_time=time(11, 0),
+                room="Room A101",
+            ),
+            CourseSchedule(
+                course_id=course2.id,
+                day_of_week="Wednesday",
+                start_time=time(13, 0),
+                end_time=time(15, 0),
+                room="Room B201",
+            ),
+            CourseSchedule(
+                course_id=course3.id,
+                day_of_week="Friday",
+                start_time=time(10, 0),
+                end_time=time(12, 0),
+                room="Room C301",
+            ),
+        ]
+        session.add_all(schedules)
+
+        await session.commit()
+        print("🎉 Demo courses + schedules created")
 
 
 async def init_all_data():

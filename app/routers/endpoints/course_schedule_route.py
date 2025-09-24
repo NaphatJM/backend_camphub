@@ -1,82 +1,66 @@
-from fastapi import APIRouter, Depends, HTTPException
+from typing import List
+from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
-from sqlalchemy import select
-from app.core.deps import get_current_user
-from app.models import get_session, Course
+from app.core.db import get_session
+from app.models import User
 from app.schemas.course_schedule_schema import (
-    CourseReadWithSchedule,
+    CourseScheduleCreate,
     CourseScheduleRead,
+    CourseScheduleUpdate,
 )
-
-router = APIRouter(
-    prefix="/courses", tags=["courses"], dependencies=[Depends(get_current_user)]
-)
+from app.services.course_schedule_service import CourseScheduleService
+from app.core.deps import get_current_user
 
 
-# ✅ ดึง course ตาม id
-@router.get("/{course_id}", response_model=CourseReadWithSchedule)
-async def get_course_by_id(
+router = APIRouter(prefix="/course_schedules", tags=["course_schedules"])
+
+
+@router.get("/", response_model=List[CourseScheduleRead])
+async def get_schedules(session: AsyncSession = Depends(get_session)):
+    service = CourseScheduleService(session)
+    return await service.get_all()
+
+
+@router.get("/{schedule_id}", response_model=CourseScheduleRead)
+async def get_schedule(schedule_id: int, session: AsyncSession = Depends(get_session)):
+    service = CourseScheduleService(session)
+    return await service.get_by_id(schedule_id)
+
+
+@router.get("/course/{course_id}", response_model=List[CourseScheduleRead])
+async def get_course_schedules(
     course_id: int, session: AsyncSession = Depends(get_session)
 ):
-    course = await session.get(Course, course_id)
-    if not course:
-        raise HTTPException(status_code=404, detail="Course not found")
-
-    schedules = [
-        CourseScheduleRead(
-            id=s.id,
-            course_id=s.course_id,
-            day_of_week=s.day_of_week,
-            start_time=s.start_time,
-            end_time=s.end_time,
-            room=s.room,
-        )
-        for s in course.schedules
-    ]
-
-    return CourseReadWithSchedule(
-        id=course.id,
-        course_code=course.course_code,
-        course_name=course.course_name,
-        credits=course.credits,
-        available_seats=course.available_seats,
-        description=course.description,
-        schedules=schedules,
-    )
+    service = CourseScheduleService(session)
+    return await service.get_by_course_id(course_id)
 
 
-@router.get("/code/{course_code}", response_model=CourseReadWithSchedule)
-async def get_course_by_code(
-    course_code: str, session: AsyncSession = Depends(get_session)
+@router.post("/", response_model=CourseScheduleRead)
+async def create_schedule(
+    data: CourseScheduleCreate,
+    session: AsyncSession = Depends(get_session),
+    current_user: User = Depends(get_current_user),
 ):
-    result = await session.execute(
-        select(Course)
-        .options(selectinload(Course.schedules))
-        .where(Course.course_code == course_code)
-    )
-    course = result.scalar_one_or_none()
-    if not course:
-        raise HTTPException(status_code=404, detail="ไม่พบรายวิชา")
+    service = CourseScheduleService(session, current_user)
+    return await service.create(data)
 
-    schedules = [
-        CourseScheduleRead(
-            id=s.id,
-            course_id=s.course_id,
-            day_of_week=s.day_of_week,
-            start_time=s.start_time,
-            end_time=s.end_time,
-            room=s.room,
-        )
-        for s in course.schedules
-    ]
 
-    return CourseReadWithSchedule(
-        id=course.id,
-        course_code=course.course_code,
-        course_name=course.course_name,
-        credits=course.credits,
-        available_seats=course.available_seats,
-        description=course.description,
-        schedules=schedules,
-    )
+@router.put("/{schedule_id}", response_model=CourseScheduleRead)
+async def update_schedule(
+    schedule_id: int,
+    data: CourseScheduleUpdate,
+    session: AsyncSession = Depends(get_session),
+    current_user: User = Depends(get_current_user),
+):
+    service = CourseScheduleService(session, current_user)
+    return await service.update(schedule_id, data)
+
+
+@router.delete("/{schedule_id}")
+async def delete_schedule(
+    schedule_id: int,
+    session: AsyncSession = Depends(get_session),
+    current_user: User = Depends(get_current_user),
+):
+    service = CourseScheduleService(session, current_user)
+    return await service.delete(schedule_id)
