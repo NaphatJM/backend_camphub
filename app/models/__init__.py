@@ -11,6 +11,8 @@ from .course_schedule_model import CourseSchedule
 from .announcement_model import Announcement
 from .event_model import Event
 from .event_enrollment_model import EventEnrollment
+from .room_model import Room
+from .location_model import Location
 
 # __all__ สำหรับ import *
 __all__ = [
@@ -24,4 +26,6 @@ __all__ = [
     "Announcement",
     "Event",
     "EventEnrollment",
+    "Room",
+    "Location",
 ]
