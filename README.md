@@ -103,9 +103,9 @@ app/
 
    The Docker setup automatically creates:
 
-   - Database: `camphub`
-   - Username: `postgres`
-   - Password: `postgres`
+   - Database: `camphub_db`
+   - Username: `camphub_user`
+   - Password: `camphub_pass`
    - Port: `5432`
 
 6. **Environment Configuration**
@@ -130,7 +130,7 @@ app/
 7. **Initialize Database**
    ```bash
    # Run database initialization (make sure venv is activated)
-   poetry run python -c "import asyncio; from app.models import init_db; asyncio.run(init_db())"
+   poetry run python -c "import asyncio; from app.core.db import init_db; asyncio.run(init_db())"
    # Or Use
    poetry run python init_db.py
    ```
@@ -163,7 +163,7 @@ poetry add gunicorn
 poetry export -f requirements.txt --output requirements.txt
 
 # Run database migrations/initialization
-poetry run python -c "import asyncio; from app.models import init_db; asyncio.run(init_db())"
+poetry run python -c "import asyncio; from app.core.db import init_db; asyncio.run(init_db())"
 ```
 
 ### Docker Build (Optional)
@@ -212,7 +212,7 @@ docker build -t camphub-backend .
 
 ### Production Mode
 
-1. **Using Gunicorn (Recommended)**
+1. **Using Gunicorn (Linux/macOS/WSL)**
 
    ```bash
    # Make sure venv is activated, then run with Poetry

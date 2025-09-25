@@ -451,7 +451,7 @@ async def init_all_data():
 
 if __name__ == "__main__":
     import asyncio
-    from app.models import init_db
+    from app.core.db import init_db
 
     async def main():
         await init_db()
