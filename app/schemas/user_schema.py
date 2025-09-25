@@ -23,10 +23,8 @@ class SignUpRequest(SQLModel):
     last_name: str
     birth_date: date
     faculty_id: Optional[int] = None
-    faculty_name: Optional[str] = None
     year_of_study: Optional[int] = None
     role_id: int = 2  # Default to student
-    role_name: Optional[str] = None
 
 
 # Me
