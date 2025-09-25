@@ -46,3 +46,24 @@ async def get_user_event_enrollments(
 ):
     service = EventEnrollmentService(session=session, current_user=current_user)
     return await service.get_user_event_enrollments()
+
+
+@router.get("/capacity/{event_id}")
+async def check_event_capacity(
+    event_id: int,
+    session: AsyncSession = Depends(get_session),
+    current_user: User = Depends(get_current_user),
+):
+    """ตรวจสอบ capacity และสถานะของ event"""
+    service = EventEnrollmentService(session=session, current_user=current_user)
+    return await service.check_event_capacity(event_id)
+
+
+@router.get("/capacity-status")
+async def get_events_capacity_status(
+    session: AsyncSession = Depends(get_session),
+    current_user: User = Depends(get_current_user),
+):
+    """ดูสถานะ capacity ของ events ทั้งหมด"""
+    service = EventEnrollmentService(session=session, current_user=current_user)
+    return await service.get_events_with_capacity_status()

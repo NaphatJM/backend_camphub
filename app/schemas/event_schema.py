@@ -37,6 +37,29 @@ class EventResponse(EventBase):
     class Config:
         from_attributes = True
 
+    @property
+    def is_full(self) -> bool:
+        """ตรวจสอบว่า event เต็มแล้วหรือยัง"""
+        if self.capacity is None:
+            return False
+        return self.enrolled_count >= self.capacity
+
+    @property
+    def available_seats(self) -> Optional[int]:
+        """จำนวนที่นั่งที่เหลือ"""
+        if self.capacity is None:
+            return None
+        return max(0, self.capacity - self.enrolled_count)
+
+    @property
+    def capacity_status(self) -> str:
+        """สถานะ capacity"""
+        if self.capacity is None:
+            return "ไม่จำกัด"
+        if self.is_full:
+            return "เต็มแล้ว"
+        return f"เหลือ {self.available_seats} ที่นั่ง"
+
 
 class EventListResponse(BaseModel):
     id: int
@@ -52,3 +75,26 @@ class EventListResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+    @property
+    def is_full(self) -> bool:
+        """ตรวจสอบว่า event เต็มแล้วหรือยัง"""
+        if self.capacity is None:
+            return False
+        return self.enrolled_count >= self.capacity
+
+    @property
+    def available_seats(self) -> Optional[int]:
+        """จำนวนที่นั่งที่เหลือ"""
+        if self.capacity is None:
+            return None
+        return max(0, self.capacity - self.enrolled_count)
+
+    @property
+    def capacity_status(self) -> str:
+        """สถานะ capacity"""
+        if self.capacity is None:
+            return "ไม่จำกัด"
+        if self.is_full:
+            return "เต็มแล้ว"
+        return f"เหลือ {self.available_seats} ที่นั่ง"

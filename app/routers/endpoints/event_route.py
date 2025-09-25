@@ -124,13 +124,12 @@ async def get_events(
     response_items = []
     if include_enrolled_count and events:
         event_ids = [e.id for e in events]
-        counts_stmt = (
-            select(EventEnrollment.event_id, func.count(EventEnrollment.id).label("c"))
-            .where(EventEnrollment.event_id.in_(event_ids))
-            .group_by(EventEnrollment.event_id)
+        # ใช้ฟังก์ชันกลางแทนการเขียน query เอง
+        from app.services.event_enrollment_service import EventEnrollmentService
+
+        counts_map = await EventEnrollmentService.get_enrollment_counts_for_events(
+            session, event_ids
         )
-        rows = await session.execute(counts_stmt)
-        counts_map = {r.event_id: r.c for r in rows}
 
         for e in events:
             response_items.append(
@@ -159,13 +158,12 @@ async def get_event_public_view(
             detail="ไม่พบกิจกรรมหรือกิจกรรมไม่เปิดให้เข้าร่วม",
         )
 
-    # Get enrolled_count
-    result = await session.execute(
-        select(func.count(EventEnrollment.id)).where(
-            EventEnrollment.event_id == event_id
-        )
+    # Get enrolled_count ใช้ฟังก์ชันกลาง
+    from app.services.event_enrollment_service import EventEnrollmentService
+
+    enrolled_count = await EventEnrollmentService.get_enrollment_count_for_event(
+        session, event_id
     )
-    enrolled_count = result.scalar_one()
 
     return EventResponse.model_validate(
         event.__dict__ | {"enrolled_count": enrolled_count}
@@ -178,13 +176,12 @@ async def get_event_by_id(event_id: int, session: AsyncSession = Depends(get_ses
     if not event:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="ไม่พบกิจกรรมนี้")
 
-    # Get enrolled_count
-    result = await session.execute(
-        select(func.count(EventEnrollment.id)).where(
-            EventEnrollment.event_id == event_id
-        )
+    # Get enrolled_count ใช้ฟังก์ชันกลาง
+    from app.services.event_enrollment_service import EventEnrollmentService
+
+    enrolled_count = await EventEnrollmentService.get_enrollment_count_for_event(
+        session, event_id
     )
-    enrolled_count = result.scalar_one()
 
     return EventResponse.model_validate(
         event.__dict__ | {"enrolled_count": enrolled_count}
