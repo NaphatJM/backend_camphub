@@ -147,6 +147,31 @@ async def get_events(
     return response_items
 
 
+@router.get("/public/{event_id}", response_model=EventResponse)
+async def get_event_public_view(
+    event_id: int, session: AsyncSession = Depends(get_session)
+):
+    """Get event details without authentication - for sharing links"""
+    event = await session.get(Event, event_id)
+    if not event or not event.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="ไม่พบกิจกรรมหรือกิจกรรมไม่เปิดให้เข้าร่วม",
+        )
+
+    # Get enrolled_count
+    result = await session.execute(
+        select(func.count(EventEnrollment.id)).where(
+            EventEnrollment.event_id == event_id
+        )
+    )
+    enrolled_count = result.scalar_one()
+
+    return EventResponse.model_validate(
+        event.__dict__ | {"enrolled_count": enrolled_count}
+    )
+
+
 @router.get("/{event_id}", response_model=EventResponse)
 async def get_event_by_id(event_id: int, session: AsyncSession = Depends(get_session)):
     event = await session.get(Event, event_id)
@@ -164,6 +189,21 @@ async def get_event_by_id(event_id: int, session: AsyncSession = Depends(get_ses
     return EventResponse.model_validate(
         event.__dict__ | {"enrolled_count": enrolled_count}
     )
+
+
+@router.post("/{event_id}/enroll")
+async def quick_enroll_event(
+    event_id: int,
+    current_user: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_session),
+):
+    """Quick enroll endpoint for mobile app"""
+    from app.services.event_enrollment_service import EventEnrollmentService
+    from app.schemas.event_enrollment_schema import EventEnrollmentCreate
+
+    service = EventEnrollmentService(session=session, current_user=current_user)
+    data = EventEnrollmentCreate(event_id=event_id)
+    return await service.enroll(data)
 
 
 @router.put("/{event_id}", response_model=EventResponse)
