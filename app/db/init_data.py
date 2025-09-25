@@ -9,6 +9,7 @@ from app.core.db import async_engine
 from app.models import User, Role, Faculty, Course, CourseSchedule
 from app.core.security import hash_password
 from app.models.announcement_model import Announcement
+from app.models.event_model import Event
 
 
 async def init_roles():
@@ -125,6 +126,65 @@ async def init_demo_users():
             print("Users already exist")
 
 
+async def init_demo_events():
+    """Initialize demo events"""
+    async with AsyncSession(async_engine) as session:
+        result = await session.execute(select(Event))
+        existing_events = result.scalars().all()
+
+        if not existing_events:
+            from datetime import datetime, timedelta
+
+            now = datetime.now()
+
+            events = [
+                Event(
+                    title="วันแนะแนวการศึกษาต่อ",
+                    description="งานแสดงสาขาวิชาและการแนะแนวการศึกษาต่อระดับปริญญาตรี พร้อมปรึกษาอาจารย์และรุ่นพี่",
+                    start_date=now + timedelta(days=10),
+                    end_date=now + timedelta(days=10, hours=8),
+                    capacity=200,
+                    is_active=True,
+                    image_url="https://images.unsplash.com/photo-1523050854058-8df90110c9f1?q=80&w=1170&auto=format&fit=crop",
+                    created_by=1,  # Admin
+                    updated_by=1,
+                    created_at=now,
+                    updated_at=now,
+                ),
+                Event(
+                    title="การแข่งขันตอบปัญหาทางวิทยาศาสตร์",
+                    description="การแข่งขันตอบปัญหาทางวิทยาศาสตร์และคณิตศาสตร์ระหว่างคณะ เปิดรับสมัครนักศึกษาทุกชั้นปี รางวัลรวมมูลค่า 50,000 บาท",
+                    start_date=now + timedelta(days=15),
+                    end_date=now + timedelta(days=15, hours=6),
+                    capacity=100,
+                    is_active=True,
+                    image_url="https://images.unsplash.com/photo-1606761568499-6d2451b23c66?q=80&w=1074&auto=format&fit=crop",
+                    created_by=2,  # Professor
+                    updated_by=2,
+                    created_at=now,
+                    updated_at=now,
+                ),
+                Event(
+                    title="งานกีฬาสีประจำปี",
+                    description="งานกีฬาสีประจำปีของมหาวิทยาลัย แข่งขันกีฬาหลากหลายประเภท ทั้งกีฬาในร่มและกลางแจ้ง เชิญชวนนักศึกษาทุกคนร่วมเชียร์และเป็นส่วนหนึ่งของความสนุกสนาน",
+                    start_date=now + timedelta(days=25),
+                    end_date=now + timedelta(days=27),
+                    capacity=500,
+                    is_active=True,
+                    image_url="https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?q=80&w=1170&auto=format&fit=crop",
+                    created_by=1,  # Admin
+                    updated_by=1,
+                    created_at=now,
+                    updated_at=now,
+                ),
+            ]
+            session.add_all(events)
+            await session.commit()
+            print("Demo events created")
+        else:
+            print("Events already exist")
+
+
 async def init_demo_announcements():
     async with AsyncSession(async_engine) as session:
         result = await session.execute(select(Announcement))
@@ -137,28 +197,28 @@ async def init_demo_announcements():
 
             announcements = [
                 Announcement(
-                    title="Welcome to CampHub",
-                    content="We are excited to have you on our platform!",
-                    description="Official welcome message for all new users joining CampHub platform",
-                    image_url="https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=800",
+                    title="ยินดีต้อนรับสู่ CampHub",
+                    content="เรายินดีต้อนรับคุณเข้าสู่แพลตฟอร์มของเรา!",
+                    description="ข้อความต้อนรับอย่างเป็นทางการสำหรับผู้ใช้งานใหม่ทุกคนที่เข้าร่วมแพลตฟอร์ม CampHub",
+                    image_url="https://images.unsplash.com/photo-1546074177-ffdda98d214f?q=80&w=1074&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
                     start_date=now,
                     end_date=now + timedelta(days=30),
                     created_by=1,
                 ),
                 Announcement(
-                    title="Course Registration Open",
-                    content="Register for your courses now! Don't miss the deadline.",
-                    description="Course registration for the upcoming semester is now open. Students can register through the student portal.",
-                    image_url="https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=800",
+                    title="เปิดรับสมัครลงทะเบียนเรียน",
+                    content="ลงทะเบียนเรียนของคุณเดี๋ยวนี้! อย่าพลาดกำหนดเวลา",
+                    description="การลงทะเบียนเรียนสำหรับภาคการศึกษาที่กำลังจะมาถึงเปิดให้บริการแล้ว นักศึกษาสามารถลงทะเบียนผ่านระบบพอร์ทัลนักศึกษา",
+                    image_url="https://images.unsplash.com/photo-1508169351866-777fc0047ac5?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
                     start_date=now,
                     end_date=now + timedelta(days=14),
                     created_by=1,
                 ),
                 Announcement(
-                    title="Campus Library Hours Extended",
-                    content="Library will be open 24/7 during exam period starting next week.",
-                    description="To support students during the examination period, the campus library will extend its operating hours to 24/7 for the next two weeks.",
-                    image_url="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800",
+                    title="ขยายเวลาเปิดห้องสมุดในช่วงสอบ",
+                    content="ห้องสมุดจะเปิดบริการ 24 ชั่วโมงในช่วงสอบเริ่มสัปดาห์หน้า",
+                    description="เพื่อสนับสนุนนักศึกษาในช่วงสอบ ห้องสมุดมหาวิทยาลัยจะขยายเวลาเปิดบริการเป็น 24 ชั่วโมงเป็นเวลา 2 สัปดาห์",
+                    image_url="https://images.unsplash.com/photo-1613160058266-ed84e3251760?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
                     start_date=now + timedelta(days=7),
                     end_date=now + timedelta(days=21),
                     created_by=3,
@@ -275,6 +335,7 @@ async def init_all_data():
         await init_demo_users()
         await init_demo_announcements()
         await init_demo_courses()
+        await init_demo_events()
 
         print("Database initialization completed successfully!")
 
