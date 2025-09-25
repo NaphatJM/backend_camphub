@@ -15,3 +15,6 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
+
+# วิธีใช้ cd มาที่ backend_camphub
+# $python ./scripts init_data.py
