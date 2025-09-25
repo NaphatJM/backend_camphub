@@ -3,13 +3,15 @@ from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 from fastapi import HTTPException
 
-from app.models import Enrollment, Course, User
+from app.models import Enrollment, Course, User, CourseSchedule, Room, Location
 from app.schemas.enrollment_schema import (
     EnrollmentCreate,
     EnrollmentRead,
     EnrollmentUpdate,
     EnrollmentSummary,
+    EnrollmentReadWithSchedule,
 )
+from app.schemas.course_schedule_schema import CourseScheduleReadWithRoom
 
 
 class EnrollmentService:
@@ -25,11 +27,25 @@ class EnrollmentService:
             .where(Enrollment.course_id == course_id)
         )
         enrollments = result.scalars().all()
-        fullname = [e.user.fullname for e in enrollments]
+
+        if not enrollments:
+            return EnrollmentSummary(
+                course_id=course_id,
+                course_code="",
+                course_name="",
+                total_enrolled=0,
+                enrolled_users=[],
+            )
+
+        # โหลด course
+        course = await self.session.get(Course, course_id)
+
         return EnrollmentSummary(
             course_id=course_id,
+            course_code=course.course_code,
+            course_name=course.course_name,
             total_enrolled=len(enrollments),
-            enrolled_users=fullname,
+            enrolled_users=[e.user.fullname for e in enrollments],
         )
 
     # 2. Enroll current user
@@ -86,22 +102,34 @@ class EnrollmentService:
         return {"ok": True}
 
     # 4. ดูข้อมูล enrollment ของ user ปัจจุบัน
-    async def get_user_enrollments(self) -> list[EnrollmentRead]:
+    async def get_user_enrollments(self) -> list[EnrollmentReadWithSchedule]:
+        # Load enrollment + course + schedule + room + location
         result = await self.session.execute(
             select(Enrollment)
-            .options(selectinload(Enrollment.course))
+            .options(
+                selectinload(Enrollment.course)
+                .selectinload(Course.schedules)
+                .selectinload(CourseSchedule.room)
+                .selectinload(Room.location),
+                selectinload(Enrollment.user),
+            )
             .where(Enrollment.user_id == self.current_user.id)
         )
         enrollments = result.scalars().all()
+
         return [
-            EnrollmentRead(
+            EnrollmentReadWithSchedule(
                 id=e.id,
                 course_id=e.course_id,
                 user_id=e.user_id,
                 status=e.status,
                 enrollment_at=e.enrollment_at,
                 fullname=e.user.fullname,
+                course_code=e.course.course_code,
                 course_name=e.course.course_name,
+                schedules=[
+                    CourseScheduleReadWithRoom.from_orm(s) for s in e.course.schedules
+                ],
             )
             for e in enrollments
         ]

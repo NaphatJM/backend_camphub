@@ -39,7 +39,7 @@ async def cancel_enroll(
     return await service.cancel(course_id)
 
 
-@router.get("/user")
+@router.get("/me")
 async def get_user_enrollments(
     session: AsyncSession = Depends(get_session),
     current_user: User = Depends(get_current_user),

@@ -1,6 +1,7 @@
 from typing import List, Optional
 from datetime import datetime
 from sqlmodel import SQLModel
+from app.schemas.course_schedule_schema import CourseScheduleReadWithRoom
 
 
 # Base fields ของ Enrollment
@@ -24,13 +25,24 @@ class EnrollmentUpdate(SQLModel):
 class EnrollmentRead(EnrollmentBase):
     id: int
     enrollment_at: datetime
-    # สามารถใส่ nested object ของ user และ course ได้ถ้าต้องการ
-    fullname: Optional[str] = None
-    course_name: Optional[str] = None
 
 
 # Summary ของ course
 class EnrollmentSummary(SQLModel):
     course_id: int
+    course_code: str
+    course_name: str
     total_enrolled: int
     enrolled_users: List[str]  # ชื่อผู้เรียน
+
+
+class EnrollmentReadWithSchedule(SQLModel):
+    id: int
+    course_id: int
+    user_id: int
+    status: str
+    enrollment_at: datetime
+    fullname: Optional[str] = None
+    course_code: Optional[str] = None
+    course_name: Optional[str] = None
+    schedules: Optional[List[CourseScheduleReadWithRoom]] = []
