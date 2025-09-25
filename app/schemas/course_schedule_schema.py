@@ -1,6 +1,7 @@
 from typing import Optional, Literal
 from datetime import time
 from sqlmodel import SQLModel
+from .room import RoomRead
 
 DayOfWeek = Literal[
     "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"
@@ -9,10 +10,10 @@ DayOfWeek = Literal[
 
 class CourseScheduleBase(SQLModel):
     course_id: int
-    day_of_week: DayOfWeek  # ใช้ Literal แทน str
+    room_id: int
+    day_of_week: DayOfWeek
     start_time: time
     end_time: time
-    room: str
 
 
 class CourseScheduleCreate(CourseScheduleBase):
@@ -20,11 +21,16 @@ class CourseScheduleCreate(CourseScheduleBase):
 
 
 class CourseScheduleUpdate(SQLModel):
+    course_id: Optional[int] = None
+    room_id: Optional[int] = None
     day_of_week: Optional[DayOfWeek] = None
     start_time: Optional[time] = None
     end_time: Optional[time] = None
-    room: Optional[str] = None
 
 
 class CourseScheduleRead(CourseScheduleBase):
     id: int
+
+
+class CourseScheduleReadWithRoom(CourseScheduleRead):
+    room: Optional[RoomRead] = None
