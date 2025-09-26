@@ -1,8 +1,19 @@
-from typing import Optional
-from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Form
+from typing import Optional, List
+from fastapi import (
+    APIRouter,
+    Depends,
+    HTTPException,
+    status,
+    UploadFile,
+    File,
+    Form,
+    Query,
+)
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from datetime import datetime
+import math
+
 from app.core.db import get_session
 from app.models import Announcement, User
 from app.core.deps import get_current_user
@@ -10,18 +21,111 @@ from app.schemas.announcement_schema import (
     AnnouncementRead,
     AnnouncementCreate,
     AnnouncementUpdate,
+    AnnouncementListResponse,
 )
 from app.services import announcement_image_service
 from app.utils import make_naive_datetime, validate_datetime_range
+from app.models.announcement_model import AnnouncementCategory
 
 router = APIRouter(prefix="/annc", tags=["announcements"])
 
 
-@router.get("/", response_model=list[AnnouncementRead])
-async def get_all_announcements(session: AsyncSession = Depends(get_session)):
-    result = await session.execute(select(Announcement))
+@router.get("/", response_model=AnnouncementListResponse)
+async def get_announcements(
+    page: int = Query(1, ge=1),
+    per_page: int = Query(10, ge=1, le=100),
+    category: Optional[AnnouncementCategory] = Query(
+        None, description="Filter by category"
+    ),
+    session: AsyncSession = Depends(get_session),
+    current_user: User = Depends(get_current_user),
+):
+    """Get announcements with optional category filter and pagination"""
+
+    stmt = select(Announcement).where(
+        Announcement.start_date <= datetime.now(),
+        Announcement.end_date >= datetime.now(),
+    )
+
+    if category:
+        stmt = stmt.where(Announcement.category == category)
+
+    count_stmt = select(Announcement).where(
+        Announcement.start_date <= datetime.now(),
+        Announcement.end_date >= datetime.now(),
+    )
+    if category:
+        count_stmt = count_stmt.where(Announcement.category == category)
+
+    count_result = await session.execute(count_stmt)
+    total = len(count_result.scalars().all())
+
+    offset = (page - 1) * per_page
+    stmt = stmt.offset(offset).limit(per_page).order_by(Announcement.created_at.desc())
+
+    result = await session.execute(stmt)
     announcements = result.scalars().all()
-    return announcements
+
+    total_pages = math.ceil(total / per_page) if total > 0 else 1
+
+    return AnnouncementListResponse(
+        announcements=announcements,
+        total=total,
+        page=page,
+        per_page=per_page,
+        total_pages=total_pages,
+    )
+
+
+@router.get("/categories")
+async def get_announcement_categories():
+    """Get all available announcement categories"""
+    return {
+        "categories": [
+            {"value": AnnouncementCategory.ACADEMIC, "label": "วิชาการ"},
+            {"value": AnnouncementCategory.ACTIVITY, "label": "กิจกรรม"},
+            {"value": AnnouncementCategory.GENERAL, "label": "ทั่วไป"},
+        ]
+    }
+
+
+@router.get("/by-category/{category}", response_model=AnnouncementListResponse)
+async def get_announcements_by_category(
+    category: AnnouncementCategory,
+    page: int = Query(1, ge=1),
+    per_page: int = Query(10, ge=1, le=100),
+    session: AsyncSession = Depends(get_session),
+    current_user: User = Depends(get_current_user),
+):
+    """Get announcements by specific category"""
+
+    # Query announcements by category
+    stmt = select(Announcement).where(
+        Announcement.category == category,
+        Announcement.start_date <= datetime.now(),
+        Announcement.end_date >= datetime.now(),
+    )
+
+    # Count total
+    count_result = await session.execute(stmt)
+    total = len(count_result.scalars().all())
+
+    # Apply pagination
+    offset = (page - 1) * per_page
+    stmt = stmt.offset(offset).limit(per_page).order_by(Announcement.created_at.desc())
+
+    result = await session.execute(stmt)
+    announcements = result.scalars().all()
+
+    total_pages = math.ceil(total / per_page) if total > 0 else 1
+
+    return AnnouncementListResponse(
+        announcements=announcements,
+        total=total,
+        page=page,
+        per_page=per_page,
+        total_pages=total_pages,
+    )
 
 
 @router.get("/{announcement_id}", response_model=AnnouncementRead)
@@ -38,6 +142,7 @@ async def get_announcement_by_id(
 async def create_announcement(
     title: str = Form(...),
     description: str = Form(...),
+    category: AnnouncementCategory = Form(AnnouncementCategory.GENERAL),
     start_date: datetime = Form(...),
     end_date: datetime = Form(...),
     image: Optional[UploadFile] = File(None),
@@ -65,6 +170,7 @@ async def create_announcement(
     new_announcement = Announcement(
         title=title,
         description=description,
+        category=category,
         start_date=start_date,
         end_date=end_date,
         image_url=image_url,

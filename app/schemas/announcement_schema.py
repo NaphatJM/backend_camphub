@@ -1,12 +1,20 @@
+from enum import Enum
 from typing import Optional, List
 from datetime import datetime
 from sqlmodel import SQLModel
 from .user_schema import UserSimple
 
 
+class AnnouncementCategory(str, Enum):
+    ACADEMIC = "วิชาการ"
+    ACTIVITY = "กิจกรรม"
+    GENERAL = "ทั่วไป"
+
+
 class AnnouncementBase(SQLModel):
     title: str
     description: str
+    category: AnnouncementCategory
     image_url: Optional[str] = None
     start_date: datetime
     end_date: datetime
@@ -19,6 +27,7 @@ class AnnouncementCreate(AnnouncementBase):
 class AnnouncementUpdate(SQLModel):
     title: Optional[str] = None
     description: Optional[str] = None
+    category: Optional[AnnouncementCategory] = None
     image_url: Optional[str] = None
     start_date: Optional[datetime] = None
     end_date: Optional[datetime] = None

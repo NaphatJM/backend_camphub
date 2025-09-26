@@ -1,6 +1,15 @@
 from sqlmodel import SQLModel, Field, Relationship
 from datetime import datetime
 from typing import Optional, List, TYPE_CHECKING
+from enum import Enum
+
+
+# Category Enum
+class AnnouncementCategory(str, Enum):
+    ACADEMIC = "วิชาการ"
+    ACTIVITY = "กิจกรรม"
+    GENERAL = "ทั่วไป"
+
 
 if TYPE_CHECKING:
     from app.models.user_model import User
@@ -13,6 +22,7 @@ class Announcement(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     title: str = Field(max_length=200)
     description: str
+    category: AnnouncementCategory = Field(default=AnnouncementCategory.GENERAL)
     image_url: Optional[str] = None
     start_date: datetime
     end_date: datetime
