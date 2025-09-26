@@ -64,3 +64,12 @@ async def delete_schedule(
 ):
     service = CourseScheduleService(session, current_user)
     return await service.delete(schedule_id)
+
+
+@router.get("/schedules/user")
+async def get_schedules_user(
+    session: AsyncSession = Depends(get_session),
+    current_user: User = Depends(get_current_user),
+):
+    service = CourseScheduleService(session=session, current_user=current_user)
+    return await service.get_all_for_user()

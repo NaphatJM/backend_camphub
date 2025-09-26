@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
 
-from app.models import CourseSchedule, User, Room
+from app.models import CourseSchedule, User, Room, Enrollment, Course
 from app.schemas.course_schedule_schema import (
     CourseScheduleCreate,
     CourseScheduleUpdate,
@@ -124,3 +124,22 @@ class CourseScheduleService:
             raise HTTPException(
                 status_code=403, detail="You are not allowed to manage schedules"
             )
+
+    # --------------------------
+    # GET all schedules user (with room + Course)
+    # --------------------------
+    async def get_all_for_user(self) -> List[CourseScheduleReadWithRoom]:
+        result = await self.session.execute(
+            select(Enrollment)
+            .options(
+                selectinload(Enrollment.course)
+                .selectinload(Course.schedules)
+                .selectinload(CourseSchedule.room)
+                .selectinload(Room.location),
+                selectinload(Enrollment.user),
+            )
+            .where(Enrollment.user_id == self.current_user.id)
+        )
+        enrollments = result.scalars().all()
+        schedules = [s for e in enrollments for s in e.course.schedules]
+        return [CourseScheduleReadWithRoom.from_orm(s) for s in schedules]
