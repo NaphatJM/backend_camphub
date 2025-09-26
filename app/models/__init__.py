@@ -9,6 +9,8 @@ from .course_model import Course
 from .enrollment_model import Enrollment
 from .course_schedule_model import CourseSchedule
 from .announcement_model import Announcement
+from .bookmark_model import AnnouncementBookmark
+
 from .event_model import Event
 from .event_enrollment_model import EventEnrollment
 from .room_model import Room
@@ -28,4 +30,5 @@ __all__ = [
     "EventEnrollment",
     "Room",
     "Location",
+    "AnnouncementBookmark",
 ]

@@ -45,3 +45,23 @@ class AnnouncementListResponse(SQLModel):
     page: int
     per_page: int
     total_pages: int
+
+
+# Bookmark Schemas
+class BookmarkResponse(SQLModel):
+    id: int
+    user_id: int
+    announcement_id: int
+    created_at: datetime
+    announcement: Optional[AnnouncementRead] = None
+
+    class Config:
+        from_attributes = True
+
+
+class BookmarkListResponse(SQLModel):
+    bookmarks: List[BookmarkResponse]
+    total: int
+    page: int
+    per_page: int
+    total_pages: int
