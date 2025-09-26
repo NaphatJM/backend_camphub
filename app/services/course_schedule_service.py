@@ -4,12 +4,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
 
-from app.models import CourseSchedule, User, Room, Enrollment, Course
+from app.models import CourseSchedule, User, Room, Enrollment
 from app.schemas.course_schedule_schema import (
     CourseScheduleCreate,
     CourseScheduleUpdate,
     CourseScheduleReadWithRoom,
 )
+from app.schemas.course_schema import CourseSimple
 
 
 class CourseScheduleService:
@@ -23,11 +24,12 @@ class CourseScheduleService:
     async def get_all(self) -> List[CourseScheduleReadWithRoom]:
         result = await self.session.execute(
             select(CourseSchedule).options(
-                selectinload(CourseSchedule.room).selectinload(Room.location)
+                selectinload(CourseSchedule.room).selectinload(Room.location),
+                selectinload(CourseSchedule.course),
             )
         )
         schedules = result.scalars().all()
-        return [CourseScheduleReadWithRoom.from_orm(s) for s in schedules]
+        return [self._to_read_with_room(s) for s in schedules]
 
     # --------------------------
     # GET schedule by ID
@@ -36,11 +38,14 @@ class CourseScheduleService:
         schedule = await self.session.get(
             CourseSchedule,
             schedule_id,
-            options=selectinload(CourseSchedule.room).selectinload(Room.location),
+            options=(
+                selectinload(CourseSchedule.room).selectinload(Room.location),
+                selectinload(CourseSchedule.course),
+            ),
         )
         if not schedule:
             raise HTTPException(status_code=404, detail="Schedule not found")
-        return CourseScheduleReadWithRoom.from_orm(schedule)
+        return self._to_read_with_room(schedule)
 
     # --------------------------
     # GET schedules by Course ID
@@ -51,14 +56,17 @@ class CourseScheduleService:
         result = await self.session.execute(
             select(CourseSchedule)
             .where(CourseSchedule.course_id == course_id)
-            .options(selectinload(CourseSchedule.room).selectinload(Room.location))
+            .options(
+                selectinload(CourseSchedule.room).selectinload(Room.location),
+                selectinload(CourseSchedule.course),
+            )
         )
         schedules = result.scalars().all()
         if not schedules:
             raise HTTPException(
                 status_code=404, detail="No schedules found for this course"
             )
-        return [CourseScheduleReadWithRoom.from_orm(s) for s in schedules]
+        return [self._to_read_with_room(s) for s in schedules]
 
     # --------------------------
     # CREATE schedule
@@ -74,7 +82,7 @@ class CourseScheduleService:
         self.session.add(new_schedule)
         await self.session.commit()
         await self.session.refresh(new_schedule)
-        return CourseScheduleReadWithRoom.from_orm(new_schedule)
+        return self._to_read_with_room(new_schedule)
 
     # --------------------------
     # UPDATE schedule
@@ -101,7 +109,7 @@ class CourseScheduleService:
         self.session.add(schedule)
         await self.session.commit()
         await self.session.refresh(schedule)
-        return CourseScheduleReadWithRoom.from_orm(schedule)
+        return self._to_read_with_room(schedule)
 
     # --------------------------
     # DELETE schedule
@@ -130,16 +138,32 @@ class CourseScheduleService:
     # --------------------------
     async def get_all_for_user(self) -> List[CourseScheduleReadWithRoom]:
         result = await self.session.execute(
-            select(Enrollment)
+            select(CourseSchedule)
+            .join(Enrollment, Enrollment.course_id == CourseSchedule.course_id)
             .options(
-                selectinload(Enrollment.course)
-                .selectinload(Course.schedules)
-                .selectinload(CourseSchedule.room)
-                .selectinload(Room.location),
-                selectinload(Enrollment.user),
+                selectinload(CourseSchedule.room).selectinload(Room.location),
+                selectinload(CourseSchedule.course),
             )
             .where(Enrollment.user_id == self.current_user.id)
         )
-        enrollments = result.scalars().all()
-        schedules = [s for e in enrollments for s in e.course.schedules]
-        return [CourseScheduleReadWithRoom.from_orm(s) for s in schedules]
+        schedules = result.scalars().unique().all()
+        return [self._to_read_with_room(s) for s in schedules]
+
+    # --------------------------
+    # PRIVATE helper to map model to schema with nested course + room
+    # --------------------------
+    def _to_read_with_room(
+        self, schedule: CourseSchedule
+    ) -> CourseScheduleReadWithRoom:
+        course_simple = None
+        if schedule.course:
+            course_simple = CourseSimple(
+                id=schedule.course.id,
+                course_code=schedule.course.course_code,
+                course_name=schedule.course.course_name,
+                credits=schedule.course.credits,
+            )
+        data = CourseScheduleReadWithRoom.from_orm(schedule)
+        # Manually attach nested objects not auto-handled by from_orm
+        data.course = course_simple
+        return data
