@@ -2,6 +2,7 @@ from typing import Optional, Literal
 from datetime import time
 from sqlmodel import SQLModel
 from .room import RoomRead
+from .course_schema import CourseSimple
 
 DayOfWeek = Literal[
     "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"
@@ -34,3 +35,4 @@ class CourseScheduleRead(CourseScheduleBase):
 
 class CourseScheduleReadWithRoom(CourseScheduleRead):
     room: Optional[RoomRead] = None
+    course: Optional[CourseSimple] = None
