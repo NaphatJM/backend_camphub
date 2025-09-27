@@ -10,7 +10,7 @@ from app.models import User, Announcement, AnnouncementBookmark
 from app.core.deps import get_current_user
 from app.schemas.announcement_schema import BookmarkResponse, BookmarkListResponse
 
-router = APIRouter(prefix="/announcements", tags=["bookmarks"])
+router = APIRouter(prefix="/annc", tags=["bookmarks"])
 
 
 @router.post("/{announcement_id}/bookmark", response_model=BookmarkResponse)
