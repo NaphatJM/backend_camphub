@@ -9,6 +9,7 @@ from fastapi import (
     File,
     Form,
 )
+from fastapi.responses import HTMLResponse
 from sqlmodel import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import and_
@@ -168,6 +169,65 @@ async def get_event_public_view(
     return EventResponse.model_validate(
         event.__dict__ | {"enrolled_count": enrolled_count}
     )
+
+
+@router.get("/open/{event_id}", response_class=HTMLResponse)
+async def open_event_in_app(event_id: int):
+        """Lightweight HTML that attempts to open the Android app via custom scheme/intent, with graceful fallbacks.
+
+        Expected app deep link: campusapp://event/{event_id}
+        Android package: com.example.campusapp
+        """
+        scheme_url = f"campusapp://event/{event_id}"
+        intent_url = (
+                f"intent://event/{event_id}#Intent;scheme=campusapp;package=com.example.campusapp;end"
+        )
+        fallback_api = f"/api/events/public/{event_id}"
+        html = f"""
+<!doctype html>
+<html lang=\"th\">
+    <head>
+        <meta charset=\"utf-8\" />
+        <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\" />
+        <title>กำลังเปิดแอป...</title>
+        <style>
+            body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Noto Sans Thai', Arial, sans-serif; padding: 24px; line-height: 1.6; }}
+            .btn {{ display:inline-block; padding:12px 16px; margin:6px 0; border-radius:8px; text-decoration:none; }}
+            .primary {{ background:#113F67; color:#fff; }}
+            .outline {{ border:1px solid #ccc; color:#333; }}
+            .hint {{ color:#666; font-size: 0.95rem; }}
+            code {{ background:#f4f4f4; padding:2px 6px; border-radius:4px; }}
+        </style>
+    </head>
+    <body>
+        <h2>กำลังเปิดกิจกรรมในแอป...</h2>
+        <p class=\"hint\">หากไม่เด้งอัตโนมัติ ให้กดปุ่มด้านล่าง</p>
+        <p>
+            <a class=\"btn primary\" href=\"{scheme_url}\">เปิดในแอป</a>
+        </p>
+        <p>
+            <a class=\"btn outline\" href=\"{intent_url}\">เปิดด้วย Intent (Android)</a>
+        </p>
+        <p class=\"hint\">หรือดูข้อมูลแบบ JSON ชั่วคราว: <a href=\"{fallback_api}\">{fallback_api}</a></p>
+        <script>
+            (function() {{
+                var triedIntent = false;
+                // Attempt custom scheme first
+                window.location.href = '{scheme_url}';
+                // After 800ms, try intent URL (Chrome on Android)
+                setTimeout(function() {{
+                    if (!triedIntent) {{
+                        triedIntent = true;
+                        window.location.href = '{intent_url}';
+                    }}
+                }}, 800);
+                // After 1800ms, show a tip; fallback link is visible on page
+            }})();
+        </script>
+    </body>
+    </html>
+        """
+        return HTMLResponse(content=html, status_code=200)
 
 
 @router.get("/{event_id}", response_model=EventResponse)
