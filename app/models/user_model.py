@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Optional, List
 from datetime import date, datetime
 from sqlmodel import SQLModel, Field, Relationship
 from pydantic import computed_field
@@ -14,6 +14,7 @@ if TYPE_CHECKING:
     from .announcement_model import Announcement
     from .event_model import Event
     from .event_enrollment_model import EventEnrollment
+    from .bookmark_model import AnnouncementBookmark
 
 
 class User(SQLModel, table=True):
@@ -51,6 +52,9 @@ class User(SQLModel, table=True):
         sa_relationship_kwargs={"foreign_keys": "[Event.updated_by]"},
     )
     event_enrollments: list["EventEnrollment"] = Relationship(back_populates="user")
+    bookmarked_announcements: List["AnnouncementBookmark"] = Relationship(
+        back_populates="user"
+    )
 
     @computed_field
     def age(self) -> Optional[int]:

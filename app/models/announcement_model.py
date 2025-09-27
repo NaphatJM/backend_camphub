@@ -1,23 +1,37 @@
 from sqlmodel import SQLModel, Field, Relationship
-from typing import TYPE_CHECKING, Optional
 from datetime import datetime
+from typing import Optional, List, TYPE_CHECKING
+from enum import Enum
+
+
+# Category Enum
+class AnnouncementCategory(str, Enum):
+    ACADEMIC = "วิชาการ"
+    ACTIVITY = "กิจกรรม"
+    GENERAL = "ทั่วไป"
+
 
 if TYPE_CHECKING:
-    from .user_model import User
+    from app.models.user_model import User
+    from app.models.bookmark_model import AnnouncementBookmark
 
 
 class Announcement(SQLModel, table=True):
-    __tablename__ = "announcement"
+    __tablename__ = "announcements"
 
     id: Optional[int] = Field(default=None, primary_key=True)
-    title: str
+    title: str = Field(max_length=200)
     description: str
+    category: AnnouncementCategory = Field(default=AnnouncementCategory.GENERAL)
     image_url: Optional[str] = None
-    start_date: datetime = Field(default_factory=datetime.now)
+    start_date: datetime
     end_date: datetime
     created_by: int = Field(foreign_key="user.id")
     created_at: datetime = Field(default_factory=datetime.now)
     updated_at: datetime = Field(default_factory=datetime.now)
 
     # Relationships
-    creator: "User" = Relationship(back_populates="announcements")
+    creator: Optional["User"] = Relationship(back_populates="announcements")
+    bookmarks: List["AnnouncementBookmark"] = Relationship(
+        back_populates="announcement"
+    )

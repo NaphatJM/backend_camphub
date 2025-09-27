@@ -200,11 +200,15 @@ async def init_demo_announcements():
 
             now = datetime.now()
 
+            # Import AnnouncementCategory at the top level
+            from app.models.announcement_model import AnnouncementCategory
+
             announcements = [
                 Announcement(
                     title="ยินดีต้อนรับสู่ CampHub",
                     content="เรายินดีต้อนรับคุณเข้าสู่แพลตฟอร์มของเรา!",
                     description="ข้อความต้อนรับอย่างเป็นทางการสำหรับผู้ใช้งานใหม่ทุกคนที่เข้าร่วมแพลตฟอร์ม CampHub",
+                    category=AnnouncementCategory.GENERAL,
                     image_url="https://images.unsplash.com/photo-1560265036-021b3652b490?q=80&w=1332&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
                     start_date=now,
                     end_date=now + timedelta(days=30),
@@ -214,6 +218,7 @@ async def init_demo_announcements():
                     title="เปิดรับสมัครลงทะเบียนเรียน",
                     content="ลงทะเบียนเรียนของคุณเดี๋ยวนี้! อย่าพลาดกำหนดเวลา",
                     description="การลงทะเบียนเรียนสำหรับภาคการศึกษาที่กำลังจะมาถึงเปิดให้บริการแล้ว นักศึกษาสามารถลงทะเบียนผ่านระบบพอร์ทัลนักศึกษา",
+                    category=AnnouncementCategory.ACADEMIC,
                     image_url="https://images.unsplash.com/photo-1613160058266-ed84e3251760?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
                     start_date=now,
                     end_date=now + timedelta(days=14),
@@ -223,6 +228,7 @@ async def init_demo_announcements():
                     title="ขยายเวลาเปิดห้องสมุดในช่วงสอบ",
                     content="ห้องสมุดจะเปิดบริการ 24 ชั่วโมงในช่วงสอบเริ่มสัปดาห์หน้า",
                     description="เพื่อสนับสนุนนักศึกษาในช่วงสอบ ห้องสมุดมหาวิทยาลัยจะขยายเวลาเปิดบริการเป็น 24 ชั่วโมงเป็นเวลา 2 สัปดาห์",
+                    category=AnnouncementCategory.ACTIVITY,
                     image_url="https://images.unsplash.com/photo-1508169351866-777fc0047ac5?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
                     start_date=now + timedelta(days=7),
                     end_date=now + timedelta(days=21),

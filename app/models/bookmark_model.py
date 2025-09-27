@@ -1,0 +1,28 @@
+from sqlmodel import SQLModel, Field, Relationship, UniqueConstraint
+from datetime import datetime
+from typing import Optional, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from app.models.user_model import User
+    from app.models.announcement_model import Announcement
+
+
+class AnnouncementBookmark(SQLModel, table=True):
+    __tablename__ = "announcement_bookmarks"
+
+    id: Optional[int] = Field(default=None, primary_key=True)
+    user_id: int = Field(foreign_key="user.id")
+    announcement_id: int = Field(foreign_key="announcements.id")
+    created_at: datetime = Field(default_factory=datetime.now)
+
+    # Relationships
+    user: Optional["User"] = Relationship(back_populates="bookmarked_announcements")
+    announcement: Optional["Announcement"] = Relationship(back_populates="bookmarks")
+
+    # Unique constraint to prevent duplicate bookmarks
+    class Config:
+        table_args = (
+            UniqueConstraint(
+                "user_id", "announcement_id", name="unique_user_announcement_bookmark"
+            ),
+        )

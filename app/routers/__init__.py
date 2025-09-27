@@ -11,6 +11,7 @@ from .endpoints import (
     event_enrollment_route,
     room_route,
     location_route,
+    bookmark_route,
 )
 
 router = APIRouter(prefix="/api")
@@ -26,3 +27,4 @@ router.include_router(enrollment_route.router)
 router.include_router(course_schedule_route.router)
 router.include_router(room_route.router)
 router.include_router(location_route.router)
+router.include_router(bookmark_route.router)
