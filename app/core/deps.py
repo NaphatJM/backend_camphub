@@ -20,7 +20,8 @@ async def get_current_user(
         username = payload.get("sub")
         if not username:
             raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials"
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="ข้อมูลการยืนยันตัวตนไม่ถูกต้อง",
             )
 
         result = await session.execute(
@@ -35,11 +36,11 @@ async def get_current_user(
 
         if not user:
             raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found"
+                status_code=status.HTTP_401_UNAUTHORIZED, detail="ไม่พบผู้ใช้งาน"
             )
         return user
 
     except ValueError:
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid or expired token"
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="โทเค็นไม่ถูกต้องหรือหมดอายุ"
         )

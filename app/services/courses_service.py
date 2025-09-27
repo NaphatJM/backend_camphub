@@ -57,7 +57,7 @@ class CourseService:
         )
         course = result.scalars().first()
         if not course:
-            raise HTTPException(status_code=404, detail="Course not found")
+            raise HTTPException(status_code=404, detail="ไม่พบรายวิชานี้")
         return CourseRead(
             id=course.id,
             course_code=course.course_code,
@@ -76,9 +76,7 @@ class CourseService:
         คืนค่า CourseRead ของ course ที่สร้างใหม่
         """
         if self.current_user.role_id not in [1, 3]:
-            raise HTTPException(
-                status_code=403, detail="You are not allowed to create courses"
-            )
+            raise HTTPException(status_code=403, detail="คุณไม่มีสิทธิ์ในการสร้างรายวิชา")
         db_course = Course(
             course_code=data.course_code,
             course_name=data.course_name,
@@ -111,13 +109,11 @@ class CourseService:
         คืนค่า CourseRead ของ course ที่อัปเดตแล้ว
         """
         if self.current_user.role_id not in [1, 3]:
-            raise HTTPException(
-                status_code=403, detail="You are not allowed to update courses"
-            )
+            raise HTTPException(status_code=403, detail="คุณไม่มีสิทธิ์ในการแก้ไขรายวิชา")
 
         course = await self.session.get(Course, course_id)
         if not course:
-            raise HTTPException(status_code=404, detail="Course not found")
+            raise HTTPException(status_code=404, detail="ไม่พบรายวิชานี้")
 
         update_data = data.dict(exclude_unset=True)
         teacher_ids = update_data.pop("teacher_ids", None)
@@ -142,9 +138,7 @@ class CourseService:
             for tid in teacher_ids:
                 teacher = await self.session.get(User, tid)
                 if not teacher:
-                    raise HTTPException(
-                        status_code=404, detail=f"Teacher {tid} not found"
-                    )
+                    raise HTTPException(status_code=404, detail=f"ไม่พบอาจารย์รหัส {tid}")
                 self.session.add(CourseTeacherLink(course_id=course_id, user_id=tid))
         else:
             # ใช้ prevalue
@@ -186,11 +180,9 @@ class CourseService:
         """
         course = await self.session.get(Course, course_id)
         if not course:
-            raise HTTPException(status_code=404, detail="Course not found")
+            raise HTTPException(status_code=404, detail="ไม่พบรายวิชานี้")
         if self.current_user.role_id not in [1, 3]:
-            raise HTTPException(
-                status_code=403, detail="You are not allowed to delete courses"
-            )
+            raise HTTPException(status_code=403, detail="คุณไม่มีสิทธิ์ในการลบรายวิชา")
         await self.session.delete(course)
         await self.session.commit()
         return {"ok": True}

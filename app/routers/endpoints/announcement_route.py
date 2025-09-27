@@ -1,8 +1,7 @@
-from typing import Optional, List
+from typing import Optional
 from fastapi import (
     APIRouter,
     Depends,
-    HTTPException,
     status,
     UploadFile,
     File,
@@ -10,12 +9,10 @@ from fastapi import (
     Query,
 )
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
 from datetime import datetime
-import math
 
 from app.core.db import get_session
-from app.models import Announcement, User
+from app.models import User
 from app.core.deps import get_current_user
 from app.schemas.announcement_schema import (
     AnnouncementRead,
@@ -23,7 +20,7 @@ from app.schemas.announcement_schema import (
     AnnouncementUpdate,
     AnnouncementListResponse,
 )
-from app.services import announcement_image_service
+from app.services.announcement_service import AnnouncementService
 from app.utils import make_naive_datetime, validate_datetime_range
 from app.models.announcement_model import AnnouncementCategory
 
@@ -40,40 +37,10 @@ async def get_announcements(
     session: AsyncSession = Depends(get_session),
     current_user: User = Depends(get_current_user),
 ):
-    """Get announcements with optional category filter and pagination"""
-
-    stmt = select(Announcement).where(
-        Announcement.start_date <= datetime.now(),
-        Announcement.end_date >= datetime.now(),
-    )
-
-    if category:
-        stmt = stmt.where(Announcement.category == category)
-
-    count_stmt = select(Announcement).where(
-        Announcement.start_date <= datetime.now(),
-        Announcement.end_date >= datetime.now(),
-    )
-    if category:
-        count_stmt = count_stmt.where(Announcement.category == category)
-
-    count_result = await session.execute(count_stmt)
-    total = len(count_result.scalars().all())
-
-    offset = (page - 1) * per_page
-    stmt = stmt.offset(offset).limit(per_page).order_by(Announcement.created_at.desc())
-
-    result = await session.execute(stmt)
-    announcements = result.scalars().all()
-
-    total_pages = math.ceil(total / per_page) if total > 0 else 1
-
-    return AnnouncementListResponse(
-        announcements=announcements,
-        total=total,
-        page=page,
-        per_page=per_page,
-        total_pages=total_pages,
+    """Get active announcements with optional category filter and pagination"""
+    service = AnnouncementService(session, current_user)
+    return await service.get_active_announcements(
+        page=page, per_page=per_page, category=category.value if category else None
     )
 
 
@@ -98,44 +65,21 @@ async def get_announcements_by_category(
     current_user: User = Depends(get_current_user),
 ):
     """Get announcements by specific category"""
-
-    # Query announcements by category
-    stmt = select(Announcement).where(
-        Announcement.category == category,
-        Announcement.start_date <= datetime.now(),
-        Announcement.end_date >= datetime.now(),
-    )
-
-    # Count total
-    count_result = await session.execute(stmt)
-    total = len(count_result.scalars().all())
-
-    # Apply pagination
-    offset = (page - 1) * per_page
-    stmt = stmt.offset(offset).limit(per_page).order_by(Announcement.created_at.desc())
-
-    result = await session.execute(stmt)
-    announcements = result.scalars().all()
-
-    total_pages = math.ceil(total / per_page) if total > 0 else 1
-
-    return AnnouncementListResponse(
-        announcements=announcements,
-        total=total,
-        page=page,
-        per_page=per_page,
-        total_pages=total_pages,
+    service = AnnouncementService(session, current_user)
+    return await service.get_active_announcements(
+        page=page, per_page=per_page, category=category.value
     )
 
 
 @router.get("/{announcement_id}", response_model=AnnouncementRead)
 async def get_announcement_by_id(
-    announcement_id: int, session: AsyncSession = Depends(get_session)
+    announcement_id: int,
+    session: AsyncSession = Depends(get_session),
+    current_user: User = Depends(get_current_user),
 ):
-    announcement = await session.get(Announcement, announcement_id)
-    if not announcement:
-        raise HTTPException(status_code=404, detail="ไม่พบข่าวประกาศ")
-    return announcement
+    """Get announcement by ID"""
+    service = AnnouncementService(session, current_user)
+    return await service.get_by_id(announcement_id)
 
 
 @router.post("/", response_model=AnnouncementRead, status_code=status.HTTP_201_CREATED)
@@ -149,88 +93,64 @@ async def create_announcement(
     current_user: User = Depends(get_current_user),
     session: AsyncSession = Depends(get_session),
 ):
+    """Create a new announcement with optional image upload"""
 
     # Convert timezone-aware datetime to naive datetime for database
     start_date = make_naive_datetime(start_date)
     end_date = make_naive_datetime(end_date)
 
     # Validate datetime range
-    try:
-        validate_datetime_range(start_date, end_date)
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+    validate_datetime_range(start_date, end_date)
 
-    # Handle image upload if provided
-    image_url = None
-    if image:
-        image_url, _ = await announcement_image_service.save_image(
-            image, "announcement"
-        )
-
-    new_announcement = Announcement(
+    # Create announcement using service
+    service = AnnouncementService(session, current_user)
+    create_data = AnnouncementCreate(
         title=title,
         description=description,
         category=category,
         start_date=start_date,
         end_date=end_date,
-        image_url=image_url,
-        created_by=current_user.id,
     )
 
-    try:
-        session.add(new_announcement)
-        await session.commit()
-        await session.refresh(new_announcement)
-        return new_announcement
-
-    except Exception as e:
-        await session.rollback()
-        if image_url:
-            announcement_image_service.delete_image(image_url)
-        raise HTTPException(
-            status_code=500, detail=f"เกิดข้อผิดพลาดในการสร้างข่าวประกาศ: {str(e)}"
-        )
+    return await service.create_with_image(create_data, image)
 
 
 @router.put("/{announcement_id}", response_model=AnnouncementRead)
 async def update_announcement(
     announcement_id: int,
-    announcement_update: AnnouncementUpdate,
-    session: AsyncSession = Depends(get_session),
+    title: Optional[str] = Form(None),
+    description: Optional[str] = Form(None),
+    category: Optional[AnnouncementCategory] = Form(None),
+    start_date: Optional[datetime] = Form(None),
+    end_date: Optional[datetime] = Form(None),
+    image: Optional[UploadFile] = File(None),
+    remove_image: bool = Form(False),
     current_user: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_session),
 ):
+    """Update announcement with optional image management"""
 
-    announcement = await session.get(Announcement, announcement_id)
-    if not announcement:
-        raise HTTPException(status_code=404, detail="ไม่พบข่าวประกาศ")
+    # Prepare update data
+    update_data = AnnouncementUpdate()
+    if title is not None:
+        update_data.title = title
+    if description is not None:
+        update_data.description = description
+    if category is not None:
+        update_data.category = category
+    if start_date is not None:
+        update_data.start_date = make_naive_datetime(start_date)
+    if end_date is not None:
+        update_data.end_date = make_naive_datetime(end_date)
 
-    update_data = announcement_update.model_dump(exclude_unset=True)
+    # Validate datetime range if both dates are provided
+    if update_data.start_date and update_data.end_date:
+        validate_datetime_range(update_data.start_date, update_data.end_date)
 
-    # Convert timezone-aware datetime to naive datetime for database
-    if "start_date" in update_data:
-        update_data["start_date"] = make_naive_datetime(update_data["start_date"])
-    if "end_date" in update_data:
-        update_data["end_date"] = make_naive_datetime(update_data["end_date"])
-
-    # Validate datetime range if dates are being updated
-    if "start_date" in update_data or "end_date" in update_data:
-        try:
-            validate_datetime_range(
-                update_data.get("start_date", announcement.start_date),
-                update_data.get("end_date", announcement.end_date),
-            )
-        except ValueError as e:
-            raise HTTPException(status_code=400, detail=str(e))
-
-    if update_data:
-        for field, value in update_data.items():
-            setattr(announcement, field, value)
-        announcement.updated_at = datetime.now()
-
-        await session.commit()
-        await session.refresh(announcement)
-
-    return announcement
+    service = AnnouncementService(session, current_user)
+    return await service.update_with_image(
+        announcement_id, update_data, image, remove_image
+    )
 
 
 @router.delete("/{announcement_id}")
@@ -239,15 +159,6 @@ async def delete_announcement(
     session: AsyncSession = Depends(get_session),
     current_user: User = Depends(get_current_user),
 ):
-    announcement = await session.get(Announcement, announcement_id)
-    if not announcement:
-        raise HTTPException(status_code=404, detail="ไม่พบข่าวประกาศ")
-
-    # Delete associated image if exists
-    if announcement.image_url:
-        announcement_image_service.delete_image(announcement.image_url)
-
-    await session.delete(announcement)
-    await session.commit()
-
-    return {"message": "ลบข่าวประกาศเรียบร้อยแล้ว"}
+    """Delete announcement with proper cleanup"""
+    service = AnnouncementService(session, current_user)
+    return await service.delete_with_cleanup(announcement_id)

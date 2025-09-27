@@ -96,7 +96,7 @@ class EnrollmentService:
         )
         enrollment = result.scalars().first()
         if not enrollment:
-            raise HTTPException(status_code=404, detail="Enrollment not found")
+            raise HTTPException(status_code=404, detail="ไม่พบการลงทะเบียนนี้")
         await self.session.delete(enrollment)
         await self.session.commit()
         return {"ok": True}

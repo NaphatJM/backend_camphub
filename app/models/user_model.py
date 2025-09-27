@@ -1,6 +1,7 @@
 from typing import TYPE_CHECKING, Optional, List
 from datetime import date, datetime
 from sqlmodel import SQLModel, Field, Relationship
+from sqlalchemy import Index
 from pydantic import computed_field
 
 
@@ -27,13 +28,25 @@ class User(SQLModel, table=True):
     first_name: str
     last_name: str
     birth_date: date
-    faculty_id: Optional[int] = Field(default=None, foreign_key="faculty.id")
+    faculty_id: Optional[int] = Field(
+        default=None, foreign_key="faculty.id", index=True
+    )
     year_of_study: Optional[int] = None
-    role_id: int = Field(default=2, foreign_key="role.id")  # 1: Professor, 2: Student
+    role_id: int = Field(
+        default=2, foreign_key="role.id", index=True
+    )  # 1: Professor, 2: Student
     profile_image_url: str | None = Field(default=None, index=True)
 
-    created_at: datetime = Field(default_factory=datetime.now)
+    created_at: datetime = Field(default_factory=datetime.now, index=True)
     updated_at: datetime = Field(default_factory=datetime.now)
+
+    # Performance indexes
+    __table_args__ = (
+        Index(
+            "idx_user_role_faculty", "role_id", "faculty_id"
+        ),  # Composite for filtering
+        Index("idx_user_created_at", "created_at"),
+    )
 
     # Relationships
     faculty: Optional["Faculty"] = Relationship(back_populates="users")

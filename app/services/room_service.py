@@ -1,7 +1,7 @@
 from typing import List, Optional
 from fastapi import HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.future import select
+from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
 from app.models import User, Room, Location
@@ -31,7 +31,7 @@ class RoomService:
             Room, room_id, options=selectinload(Room.location)
         )
         if not room:
-            raise HTTPException(status_code=404, detail="Room not found")
+            raise HTTPException(status_code=404, detail="ไม่พบห้องนี้")
         return RoomRead.from_orm(room)
 
     # --------------------------
@@ -42,7 +42,7 @@ class RoomService:
         # ตรวจว่า location_id มีอยู่จริง
         location = await self.session.get(Location, data.location_id)
         if not location:
-            raise HTTPException(status_code=404, detail="Location not found")
+            raise HTTPException(status_code=404, detail="ไม่พบสถานที่นี้")
 
         new_room = Room(**data.model_dump())
         self.session.add(new_room)
@@ -57,13 +57,13 @@ class RoomService:
         self._check_permission()
         room = await self.session.get(Room, room_id)
         if not room:
-            raise HTTPException(status_code=404, detail="Room not found")
+            raise HTTPException(status_code=404, detail="ไม่พบห้องนี้")
 
         update_data = data.model_dump(exclude_unset=True)
         if "location_id" in update_data:
             location = await self.session.get(Location, update_data["location_id"])
             if not location:
-                raise HTTPException(status_code=404, detail="Location not found")
+                raise HTTPException(status_code=404, detail="ไม่พบสถานที่นี้")
 
         for field, value in update_data.items():
             setattr(room, field, value)
@@ -80,7 +80,7 @@ class RoomService:
         self._check_permission()
         room = await self.session.get(Room, room_id)
         if not room:
-            raise HTTPException(status_code=404, detail="Room not found")
+            raise HTTPException(status_code=404, detail="ไม่พบห้องนี้")
 
         await self.session.delete(room)
         await self.session.commit()
@@ -91,6 +91,4 @@ class RoomService:
     # --------------------------
     def _check_permission(self):
         if not self.current_user or self.current_user.role_id not in [1, 3]:
-            raise HTTPException(
-                status_code=403, detail="You are not allowed to manage rooms"
-            )
+            raise HTTPException(status_code=403, detail="คุณไม่มีสิทธิ์ในการจัดการห้อง")

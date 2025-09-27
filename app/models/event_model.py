@@ -1,5 +1,6 @@
 from typing import TYPE_CHECKING, Optional
 from sqlmodel import SQLModel, Field, Relationship
+from sqlalchemy import Index
 from datetime import datetime
 
 
@@ -14,18 +15,25 @@ class Event(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     title: str = Field(index=True)
     description: Optional[str] = None
-    start_date: datetime
-    end_date: datetime
+    start_date: datetime = Field(index=True)
+    end_date: datetime = Field(index=True)
     capacity: int | None = Field(
         default=None, description="Max participants, None = unlimited"
     )
-    is_active: bool = Field(default=True)
+    is_active: bool = Field(default=True, index=True)
     image_url: Optional[str] = None
-    created_by: int = Field(foreign_key="user.id")
-    created_at: datetime = Field(default_factory=datetime.now)
+    created_by: int = Field(foreign_key="user.id", index=True)
+    created_at: datetime = Field(default_factory=datetime.now, index=True)
     updated_by: int = Field(foreign_key="user.id")
     updated_at: datetime = Field(
         default_factory=datetime.now, sa_column_kwargs={"onupdate": datetime.now}
+    )
+
+    # Performance indexes
+    __table_args__ = (
+        Index("idx_event_active_dates", "is_active", "start_date", "end_date"),
+        Index("idx_event_search_title", "title"),
+        Index("idx_event_created_by_date", "created_by", "created_at"),
     )
 
     # Relationships

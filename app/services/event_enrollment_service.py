@@ -121,7 +121,7 @@ class EventEnrollmentService:
         )
         enrollment = result.scalars().first()
         if not enrollment:
-            raise HTTPException(status_code=404, detail="Event enrollment not found")
+            raise HTTPException(status_code=404, detail="ไม่พบการลงทะเบียนกิจกรรมนี้")
         await self.session.delete(enrollment)
         await self.session.commit()
         return {"ok": True}

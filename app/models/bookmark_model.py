@@ -1,4 +1,5 @@
 from sqlmodel import SQLModel, Field, Relationship, UniqueConstraint
+from sqlalchemy import Index
 from datetime import datetime
 from typing import Optional, TYPE_CHECKING
 
@@ -11,18 +12,15 @@ class AnnouncementBookmark(SQLModel, table=True):
     __tablename__ = "announcement_bookmarks"
 
     id: Optional[int] = Field(default=None, primary_key=True)
-    user_id: int = Field(foreign_key="user.id")
-    announcement_id: int = Field(foreign_key="announcements.id")
-    created_at: datetime = Field(default_factory=datetime.now)
+    user_id: int = Field(foreign_key="user.id", index=True)
+    announcement_id: int = Field(foreign_key="announcements.id", index=True)
+    created_at: datetime = Field(default_factory=datetime.now, index=True)
 
-    # Relationships
-    user: Optional["User"] = Relationship(back_populates="bookmarked_announcements")
-    announcement: Optional["Announcement"] = Relationship(back_populates="bookmarks")
-
-    # Unique constraint to prevent duplicate bookmarks
-    class Config:
-        table_args = (
-            UniqueConstraint(
-                "user_id", "announcement_id", name="unique_user_announcement_bookmark"
-            ),
-        )
+    # Performance indexes
+    __table_args__ = (
+        UniqueConstraint(
+            "user_id", "announcement_id", name="unique_user_announcement_bookmark"
+        ),
+        Index("idx_bookmark_user_announcement", "user_id", "announcement_id"),
+        Index("idx_bookmark_created_at", "created_at"),
+    )

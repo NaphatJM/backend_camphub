@@ -1,5 +1,6 @@
 from typing import TYPE_CHECKING, Optional
 from sqlmodel import SQLModel, Field, Relationship
+from sqlalchemy import Index
 from datetime import datetime
 
 if TYPE_CHECKING:
@@ -11,10 +12,18 @@ class Enrollment(SQLModel, table=True):
     __tablename__ = "enrollment"
 
     id: Optional[int] = Field(default=None, primary_key=True)
-    course_id: int = Field(foreign_key="course.id")
-    user_id: int = Field(foreign_key="user.id")
-    status: str = Field(default="enrolled")  # e.g., enrolled, completed, dropped
-    enrollment_at: datetime = Field(default_factory=datetime.now)
+    course_id: int = Field(foreign_key="course.id", index=True)
+    user_id: int = Field(foreign_key="user.id", index=True)
+    status: str = Field(
+        default="enrolled", index=True
+    )  # e.g., enrolled, completed, dropped
+    enrollment_at: datetime = Field(default_factory=datetime.now, index=True)
+
+    # Performance indexes
+    __table_args__ = (
+        Index("idx_enrollment_course_user", "course_id", "user_id"),
+        Index("idx_enrollment_status_date", "status", "enrollment_at"),
+    )
 
     # Relationships
     user: "User" = Relationship(back_populates="enrollments")

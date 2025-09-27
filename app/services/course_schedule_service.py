@@ -1,7 +1,7 @@
 from typing import List, Optional
 from fastapi import HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.future import select
+from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
 from app.models import CourseSchedule, User, Room, Enrollment
@@ -44,7 +44,7 @@ class CourseScheduleService:
             ),
         )
         if not schedule:
-            raise HTTPException(status_code=404, detail="Schedule not found")
+            raise HTTPException(status_code=404, detail="ไม่พบตารางเรียนนี้")
         return self._to_read_with_room(schedule)
 
     # --------------------------
@@ -63,9 +63,7 @@ class CourseScheduleService:
         )
         schedules = result.scalars().all()
         if not schedules:
-            raise HTTPException(
-                status_code=404, detail="No schedules found for this course"
-            )
+            raise HTTPException(status_code=404, detail="ไม่พบตารางเรียนสำหรับรายวิชานี้")
         return [self._to_read_with_room(s) for s in schedules]
 
     # --------------------------
@@ -76,7 +74,7 @@ class CourseScheduleService:
         # ตรวจว่า room_id มีจริง
         room = await self.session.get(Room, data.room_id)
         if not room:
-            raise HTTPException(status_code=404, detail="Room not found")
+            raise HTTPException(status_code=404, detail="ไม่พบห้องนี้")
 
         new_schedule = CourseSchedule(**data.model_dump())
         self.session.add(new_schedule)
@@ -93,7 +91,7 @@ class CourseScheduleService:
         self._check_permission()
         schedule = await self.session.get(CourseSchedule, schedule_id)
         if not schedule:
-            raise HTTPException(status_code=404, detail="Schedule not found")
+            raise HTTPException(status_code=404, detail="ไม่พบตารางเรียนนี้")
 
         update_data = data.model_dump(exclude_unset=True)
 
@@ -101,7 +99,7 @@ class CourseScheduleService:
         if "room_id" in update_data:
             room = await self.session.get(Room, update_data["room_id"])
             if not room:
-                raise HTTPException(status_code=404, detail="Room not found")
+                raise HTTPException(status_code=404, detail="ไม่พบห้องนี้")
 
         for field, value in update_data.items():
             setattr(schedule, field, value)
@@ -118,7 +116,7 @@ class CourseScheduleService:
         self._check_permission()
         schedule = await self.session.get(CourseSchedule, schedule_id)
         if not schedule:
-            raise HTTPException(status_code=404, detail="Schedule not found")
+            raise HTTPException(status_code=404, detail="ไม่พบตารางเรียนนี้")
 
         await self.session.delete(schedule)
         await self.session.commit()
@@ -129,9 +127,7 @@ class CourseScheduleService:
     # --------------------------
     def _check_permission(self):
         if not self.current_user or self.current_user.role_id not in [1, 3]:
-            raise HTTPException(
-                status_code=403, detail="You are not allowed to manage schedules"
-            )
+            raise HTTPException(status_code=403, detail="คุณไม่มีสิทธิ์ในการจัดการตารางเรียน")
 
     # --------------------------
     # GET all schedules user (with room + Course)

@@ -1,7 +1,7 @@
 from typing import List, Optional
 from fastapi import HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.future import select
+from sqlalchemy import select
 
 from app.models import User, Location
 from app.schemas.location import LocationCreate, LocationRead, LocationUpdate
@@ -26,7 +26,7 @@ class LocationService:
     async def get_by_id(self, location_id: int) -> LocationRead:
         location = await self.session.get(Location, location_id)
         if not location:
-            raise HTTPException(status_code=404, detail="Location not found")
+            raise HTTPException(status_code=404, detail="ไม่พบสถานที่นี้")
         return LocationRead.from_orm(location)
 
     # --------------------------
@@ -47,7 +47,7 @@ class LocationService:
         self._check_permission()
         location = await self.session.get(Location, location_id)
         if not location:
-            raise HTTPException(status_code=404, detail="Location not found")
+            raise HTTPException(status_code=404, detail="ไม่พบสถานที่นี้")
 
         update_data = data.model_dump(exclude_unset=True)
         for field, value in update_data.items():
@@ -65,7 +65,7 @@ class LocationService:
         self._check_permission()
         location = await self.session.get(Location, location_id)
         if not location:
-            raise HTTPException(status_code=404, detail="Location not found")
+            raise HTTPException(status_code=404, detail="ไม่พบสถานที่นี้")
 
         await self.session.delete(location)
         await self.session.commit()
@@ -76,6 +76,4 @@ class LocationService:
     # --------------------------
     def _check_permission(self):
         if not self.current_user or self.current_user.role_id not in [1, 3]:
-            raise HTTPException(
-                status_code=403, detail="You are not allowed to manage locations"
-            )
+            raise HTTPException(status_code=403, detail="คุณไม่มีสิทธิ์ในการจัดการสถานที่")

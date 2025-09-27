@@ -36,7 +36,7 @@ def decode_token(token: str) -> dict:
         payload = jwt.decode(token, settings.JWT_SECRET_KEY, algorithms=[ALGORITHM])
         return payload
     except jwt.PyJWTError as e:
-        raise ValueError("Invalid or expired token") from e
+        raise ValueError("โทเค็นไม่ถูกต้องหรือหมดอายุ") from e
 
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
