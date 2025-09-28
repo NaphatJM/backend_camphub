@@ -12,7 +12,7 @@ pipeline {
 
         stage('Checkout') {
             steps {
-                git branch: 'main', url: 'https://github.com/kornphongP/backend_camphub.git'
+                git branch: 'main', url: 'https://github.com/krahyor/backend_camphub.git'
             }
         }
 
