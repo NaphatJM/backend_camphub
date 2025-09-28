@@ -95,7 +95,6 @@ async def get_announcements_by_category(
     page: int = Query(1, ge=1),
     per_page: int = Query(10, ge=1, le=100),
     session: AsyncSession = Depends(get_session),
-    current_user: User = Depends(get_current_user),
 ):
     """Get announcements by specific category"""
 
