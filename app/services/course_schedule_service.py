@@ -22,7 +22,7 @@ class CourseScheduleService:
     # GET all schedules (with room + location)
     # --------------------------
     async def get_all(self) -> List[CourseScheduleReadWithRoom]:
-        result = await self.session.execute(
+        result = await self.session.exec(
             select(CourseSchedule).options(
                 selectinload(CourseSchedule.room).selectinload(Room.location),
                 selectinload(CourseSchedule.course),
@@ -53,7 +53,7 @@ class CourseScheduleService:
     async def get_by_course_id(
         self, course_id: int
     ) -> List[CourseScheduleReadWithRoom]:
-        result = await self.session.execute(
+        result = await self.session.exec(
             select(CourseSchedule)
             .where(CourseSchedule.course_id == course_id)
             .options(
@@ -137,7 +137,7 @@ class CourseScheduleService:
     # GET all schedules user (with room + Course)
     # --------------------------
     async def get_all_for_user(self) -> List[CourseScheduleReadWithRoom]:
-        result = await self.session.execute(
+        result = await self.session.exec(
             select(CourseSchedule)
             .join(Enrollment, Enrollment.course_id == CourseSchedule.course_id)
             .options(

@@ -74,7 +74,7 @@ async def sample_announcement(session, authenticated_user):
     from app.models.user_model import User
     from sqlalchemy import select
 
-    result = await session.execute(select(User).where(User.username == "testuser"))
+    result = await session.exec(select(User).where(User.username == "testuser"))
     user = result.scalar_one()
 
     now = datetime.now()
@@ -291,7 +291,7 @@ class TestAnnouncement:
         from sqlalchemy import select
 
         # Get user
-        result = await session.execute(select(User).where(User.username == "testuser"))
+        result = await session.exec(select(User).where(User.username == "testuser"))
         user = result.scalar_one()
 
         now = datetime.now()

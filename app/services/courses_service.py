@@ -27,7 +27,7 @@ class CourseService:
         ดึงข้อมูล course ทั้งหมด พร้อม preload enrollments
         คืนค่าเป็น list ของ CourseRead schema
         """
-        result = await self.session.execute(
+        result = await self.session.exec(
             select(Course).options(selectinload(Course.enrollments))
         )
         courses = result.scalars().all()
@@ -50,7 +50,7 @@ class CourseService:
         ดึง course ตาม ID พร้อม preload enrollments
         ถ้าไม่พบ course จะ raise HTTPException 404
         """
-        result = await self.session.execute(
+        result = await self.session.exec(
             select(Course)
             .options(selectinload(Course.enrollments))
             .where(Course.id == course_id)
@@ -82,7 +82,7 @@ class CourseService:
             )
 
         # ตรวจสอบ duplicate course code
-        existing_course = await self.session.execute(
+        existing_course = await self.session.exec(
             select(Course).where(Course.course_code == data.course_code)
         )
         if existing_course.scalars().first():
@@ -130,7 +130,7 @@ class CourseService:
         if not course:
             raise HTTPException(status_code=404, detail="Course not found")
 
-        update_data = data.dict(exclude_unset=True)
+        update_data = data.model_dump(exclude_unset=True)
         teacher_ids = update_data.pop("teacher_ids", None)
 
         for field, value in update_data.items():
@@ -138,7 +138,7 @@ class CourseService:
         self.session.add(course)
 
         # preload existing teacher links
-        result = await self.session.execute(
+        result = await self.session.exec(
             select(CourseTeacherLink.user_id).where(
                 CourseTeacherLink.course_id == course_id
             )
@@ -146,7 +146,7 @@ class CourseService:
         existing_teacher_ids = [row[0] for row in result.fetchall()]
 
         if teacher_ids is not None:
-            await self.session.execute(
+            await self.session.exec(
                 text("DELETE FROM course_teacher_link WHERE course_id = :course_id"),
                 {"course_id": course_id},
             )
@@ -171,7 +171,7 @@ class CourseService:
 
         await self.session.commit()
 
-        result = await self.session.execute(
+        result = await self.session.exec(
             select(Course)
             .options(selectinload(Course.enrollments))
             .where(Course.id == course_id)

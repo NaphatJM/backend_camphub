@@ -26,7 +26,7 @@ from app.models.event_model import Event
 # ---------------------------
 async def init_roles():
     async with AsyncSession(async_engine) as session:
-        result = await session.execute(select(Role))
+        result = await session.exec(select(Role))
         existing_roles = result.scalars().all()
         if existing_roles:
             print("Roles already exist")
@@ -53,7 +53,7 @@ async def init_roles():
 # ---------------------------
 async def init_faculties():
     async with AsyncSession(async_engine) as session:
-        result = await session.execute(select(Faculty))
+        result = await session.exec(select(Faculty))
         existing_faculties = result.scalars().all()
         if existing_faculties:
             print("Faculties already exist")
@@ -79,17 +79,17 @@ async def init_faculties():
 # ---------------------------
 async def init_demo_users():
     async with AsyncSession(async_engine) as session:
-        result = await session.execute(select(User))
+        result = await session.exec(select(User))
         if result.scalars().first():
             print("Users already exist")
             return
 
-        eng_faculty = await session.execute(
+        eng_faculty = await session.exec(
             select(Faculty).where(Faculty.name == "วิศวกรรมศาสตร์")
         )
         eng_faculty = eng_faculty.scalars().first()
 
-        it_faculty = await session.execute(
+        it_faculty = await session.exec(
             select(Faculty).where(Faculty.name == "เทคโนโลยีสารสนเทศ")
         )
         it_faculty = it_faculty.scalars().first()
@@ -134,7 +134,7 @@ async def init_demo_users():
 async def init_demo_events():
     """Initialize demo events"""
     async with AsyncSession(async_engine) as session:
-        result = await session.execute(select(Event))
+        result = await session.exec(select(Event))
         existing_events = result.scalars().all()
 
         if not existing_events:
@@ -192,7 +192,7 @@ async def init_demo_events():
 
 async def init_demo_announcements():
     async with AsyncSession(async_engine) as session:
-        result = await session.execute(select(Announcement))
+        result = await session.exec(select(Announcement))
         existing_announcements = result.scalars().all()
 
         if not existing_announcements:
@@ -248,7 +248,7 @@ async def init_demo_announcements():
 async def init_locations_and_rooms():
     async with AsyncSession(async_engine) as session:
         # Locations
-        result = await session.execute(select(Location))
+        result = await session.exec(select(Location))
         if result.scalars().first():
             print("Locations already exist")
             return
@@ -290,11 +290,11 @@ async def init_locations_and_rooms():
 # ---------------------------
 async def init_demo_courses():
     async with AsyncSession(async_engine) as session:
-        if (await session.execute(select(Course))).scalars().first():
+        if (await session.exec(select(Course))).scalars().first():
             print("Courses already exist")
             return
 
-        teacher = await session.execute(select(User).where(User.id == 2))
+        teacher = await session.exec(select(User).where(User.id == 2))
         teacher = teacher.scalars().first()
         if not teacher:
             print("❌ Teacher user not found")
@@ -332,7 +332,7 @@ async def init_demo_courses():
         await session.flush()  # เพื่อให้ได้ course.id
 
         # ดึง room
-        rooms = await session.execute(select(Room))
+        rooms = await session.exec(select(Room))
         rooms = rooms.scalars().all()
         room_dict = {r.name: r.id for r in rooms}
 
@@ -383,16 +383,16 @@ async def init_demo_courses():
 async def init_demo_enrollments():
     async with AsyncSession(async_engine) as session:
         # ตรวจสอบว่ามี enrollment อยู่แล้วหรือยัง
-        result = await session.execute(select(Enrollment))
+        result = await session.exec(select(Enrollment))
         if result.scalars().first():
             print("Enrollments already exist")
             return
 
         # โหลดผู้ใช้งานและคอร์ส
-        users_result = await session.execute(select(User))
+        users_result = await session.exec(select(User))
         users = users_result.scalars().all()
 
-        courses_result = await session.execute(select(Course))
+        courses_result = await session.exec(select(Course))
         courses = courses_result.scalars().all()
 
         # สร้าง enrollment ตัวอย่าง

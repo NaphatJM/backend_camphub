@@ -23,7 +23,7 @@ async def get_current_user(
                 status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials"
             )
 
-        result = await session.execute(
+        result = await session.exec(
             select(User)
             .options(
                 selectinload(User.role),

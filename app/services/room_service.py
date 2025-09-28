@@ -17,7 +17,7 @@ class RoomService:
     # GET all rooms (with location)
     # --------------------------
     async def get_all(self) -> List[RoomRead]:
-        result = await self.session.execute(
+        result = await self.session.exec(
             select(Room).options(selectinload(Room.location))
         )
         rooms = result.scalars().all()
