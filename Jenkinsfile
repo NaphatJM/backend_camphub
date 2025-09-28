@@ -3,6 +3,9 @@ pipeline {
 
     environment {
         SONARQUBE = credentials('sonar-token')   // Jenkins Credentials สำหรับ SonarQube token
+        SQLDB_URL = credentials('SQLDB_URL')       // Jenkins credentials ID
+        SECRET_KEY = credentials('SECRET_KEY')
+        JWT_SECRET_KEY = credentials('JWT_SECRET_KEY')
     }
 
     stages {
@@ -77,6 +80,9 @@ pipeline {
                 docker stop backend_camphub || true
                 docker rm backend_camphub || true
                 docker run -d \
+                        -e SQLDB_URL=$SQLDB_URL \
+                        -e SECRET_KEY=$SECRET_KEY \
+                        -e JWT_SECRET_KEY=$JWT_SECRET_KEY \
                         --name backend_camphub \
                         -p 8000:8000 \
                         backend_camphub:latest \
