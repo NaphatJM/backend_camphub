@@ -45,6 +45,8 @@ pipeline {
                                 -Dsonar.sources=app \
                                 -Dsonar.host.url=http://host.docker.internal:9001 \
                                 -Dsonar.login=${SONARQUBE} \
+                                -Dsonar.exclusions=**/tests/**,**/*.md \
+                                -Dsonar.python.ignoreHeaderComments=true
                         '''
                     }
                 }
