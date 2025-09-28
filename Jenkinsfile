@@ -48,39 +48,6 @@ pipeline {
                 }
             }
         }
-        stage('Build Docker Image') {
-            steps {
-                sh 'docker build -t fastapi-app:latest .'
-            }
-        }
-
-        stage('Deploy Container') {
-            steps {
-                script {
-                    // Set environment variables and port (customizable)
-                    def appPort = env.APP_PORT ?: '8000'
-                    def appEnv = env.APP_ENV ?: 'production'
-
-                    // Stop & remove old container if exists
-                    sh '''
-                    if [ $(docker ps -aq -f name=app) ]; then
-                        docker stop app
-                        docker rm app
-                    fi
-                    '''
-
-                    // Run new container with env and port mapping
-                    sh """
-                    docker run -d \
-                        --name app \
-                        -e APP_ENV=${appEnv} \
-                        -p ${appPort}:8000 \
-                        fastapi-app:latest \
-                        uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
-                    """
-                }
-            }
-        }
     }
 
     post {
