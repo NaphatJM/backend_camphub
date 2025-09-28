@@ -119,7 +119,7 @@ async def get_events(
         stmt = stmt.where(and_(*filters))
 
     stmt = stmt.order_by(Event.created_at.desc())
-    events = (await session.exec(stmt)).scalars().all()
+    events = (await session.exec(stmt)).all()
 
     # Convert to response format with enrolled_count
     response_items = []

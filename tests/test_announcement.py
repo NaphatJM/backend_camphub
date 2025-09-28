@@ -6,16 +6,23 @@ from app.models.user_model import User
 from app.models.faculty_model import Faculty
 from app.models.role_model import Role
 from app.models.announcement_model import Announcement, AnnouncementCategory
+import io
+import asyncio
+import json
+from jose import jwt
+from app.core.config import settings
 
 
 @pytest_asyncio.fixture
 async def setup_base_data(session):
     """Setup base data required for tests."""
     # Create roles
-    student_role = Role(id=1, name="Student", description="นักศึกษา")
-    teacher_role = Role(id=2, name="Teacher", description="อาจารย์")
+    professor_role = Role(id=1, name="Professor", description="อาจารย์")
+    student_role = Role(id=2, name="Student", description="นักศึกษา")
+    admin_role = Role(id=3, name="Admin", description="ผู้ดูแลระบบ")
+    session.add(professor_role)
     session.add(student_role)
-    session.add(teacher_role)
+    session.add(admin_role)
 
     # Create faculty
     faculty = Faculty(id=1, name="คณะวิทยาศาสตร์และเทคโนโลยี")
@@ -23,8 +30,9 @@ async def setup_base_data(session):
 
     await session.commit()
     return {
+        "professor_role": professor_role,
         "student_role": student_role,
-        "teacher_role": teacher_role,
+        "admin_role": admin_role,
         "faculty": faculty,
     }
 
@@ -41,7 +49,7 @@ async def authenticated_user(client: AsyncClient, setup_base_data):
         "birth_date": "2000-01-01",
         "faculty_id": 1,
         "year_of_study": 3,
-        "role_id": 2,  # Teacher role to create announcements
+        "role_id": 1,  # Professor role to create announcements
     }
 
     response = await client.post("/api/auth/signup", json=signup_data)
@@ -340,3 +348,212 @@ class TestAnnouncement:
         assert "Current Announcement" in titles
         assert "Past Announcement" not in titles
         assert "Future Announcement" not in titles
+
+
+# ===== เพิ่ม test อิสระ (อยู่นอก class) =====
+
+
+@pytest.mark.asyncio
+async def test_student_cannot_create_announcement(client, setup_base_data):
+    # สมัคร user role student
+    signup_data = {
+        "username": "student1",
+        "email": "student1@example.com",
+        "password": "testpass123",
+        "first_name": "Student",
+        "last_name": "One",
+        "birth_date": "2000-01-01",
+        "faculty_id": 1,
+        "year_of_study": 1,
+        "role_id": 2,  # Student
+    }
+    resp = await client.post("/api/auth/signup", json=signup_data)
+    token = resp.json()["access_token"]
+    headers = {"Authorization": f"Bearer {token}"}
+    now = datetime.now()
+    form_data = {
+        "title": "Student Announcement",
+        "description": "Should not allow",
+        "category": "วิชาการ",
+        "start_date": now.isoformat(),
+        "end_date": (now + timedelta(days=1)).isoformat(),
+    }
+    response = await client.post("/api/annc/", data=form_data, headers=headers)
+    assert response.status_code == 403
+
+
+@pytest.mark.asyncio
+async def test_update_announcement_success(
+    client, authenticated_user, sample_announcement
+):
+    headers = authenticated_user["headers"]
+    ann_id = sample_announcement.id
+    update_data = {"title": "Updated Title"}
+    response = await client.patch(
+        f"/api/annc/{ann_id}", json=update_data, headers=headers
+    )
+    assert response.status_code == 200
+    assert response.json()["title"] == "Updated Title"
+
+
+@pytest.mark.asyncio
+async def test_update_announcement_not_found(client, authenticated_user):
+    headers = authenticated_user["headers"]
+    response = await client.patch(
+        "/api/annc/99999", json={"title": "X"}, headers=headers
+    )
+    assert response.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_delete_announcement_success(
+    client, authenticated_user, sample_announcement
+):
+    headers = authenticated_user["headers"]
+    ann_id = sample_announcement.id
+    response = await client.delete(f"/api/annc/{ann_id}", headers=headers)
+    assert response.status_code == 204
+
+
+@pytest.mark.asyncio
+async def test_delete_announcement_not_found(client, authenticated_user):
+    headers = authenticated_user["headers"]
+    response = await client.delete("/api/annc/99999", headers=headers)
+    assert response.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_create_announcement_missing_fields(client, authenticated_user):
+    headers = authenticated_user["headers"]
+    form_data = {"title": "No Desc"}  # missing description, category, dates
+    response = await client.post("/api/annc/", data=form_data, headers=headers)
+    assert response.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_create_announcement_invalid_category(client, authenticated_user):
+    headers = authenticated_user["headers"]
+    now = datetime.now()
+    form_data = {
+        "title": "Invalid Cat",
+        "description": "desc",
+        "category": "ไม่ถูกต้อง",
+        "start_date": now.isoformat(),
+        "end_date": (now + timedelta(days=1)).isoformat(),
+    }
+    response = await client.post("/api/annc/", data=form_data, headers=headers)
+    assert response.status_code in (400, 422)
+
+
+@pytest.mark.asyncio
+async def test_student_cannot_delete_announcement(
+    client, setup_base_data, sample_announcement
+):
+    # สมัคร user role student
+    signup_data = {
+        "username": "student2",
+        "email": "student2@example.com",
+        "password": "testpass123",
+        "first_name": "Student",
+        "last_name": "Two",
+        "birth_date": "2000-01-01",
+        "faculty_id": 1,
+        "year_of_study": 1,
+        "role_id": 2,  # Student
+    }
+    resp = await client.post("/api/auth/signup", json=signup_data)
+    token = resp.json()["access_token"]
+    headers = {"Authorization": f"Bearer {token}"}
+    ann_id = sample_announcement.id
+    response = await client.delete(f"/api/annc/{ann_id}", headers=headers)
+    assert response.status_code == 403
+
+
+@pytest.mark.asyncio
+async def test_create_announcement_with_image(client, authenticated_user):
+    headers = authenticated_user["headers"]
+    now = datetime.now()
+    # สร้างไฟล์ภาพจำลอง (png)
+    image_content = b"\x89PNG\r\n\x1a\n" + b"0" * 100  # 100 bytes
+    files = {"image": ("test.png", io.BytesIO(image_content), "image/png")}
+    data = {
+        "title": "Image Announcement",
+        "description": "ประกาศพร้อมรูป",
+        "category": "วิชาการ",
+        "start_date": now.isoformat(),
+        "end_date": (now + timedelta(days=1)).isoformat(),
+    }
+    response = await client.post("/api/annc/", data=data, files=files, headers=headers)
+    assert response.status_code == 201
+    assert response.json()["image_url"]
+
+
+@pytest.mark.asyncio
+async def test_create_announcement_with_invalid_image_type(client, authenticated_user):
+    headers = authenticated_user["headers"]
+    now = datetime.now()
+    # สร้างไฟล์ text (ไม่ใช่รูป)
+    files = {"image": ("test.txt", io.BytesIO(b"not an image"), "text/plain")}
+    data = {
+        "title": "Invalid Image",
+        "description": "ไฟล์ไม่ใช่รูปภาพ",
+        "category": "วิชาการ",
+        "start_date": now.isoformat(),
+        "end_date": (now + timedelta(days=1)).isoformat(),
+    }
+    response = await client.post("/api/annc/", data=data, files=files, headers=headers)
+    assert response.status_code in (400, 422)
+
+
+@pytest.mark.asyncio
+async def test_create_announcement_with_large_image(client, authenticated_user):
+    headers = authenticated_user["headers"]
+    now = datetime.now()
+    # สร้างไฟล์ภาพขนาดใหญ่ (15MB+)
+    image_content = b"\x89PNG\r\n\x1a\n" + b"0" * (15 * 1024 * 1024 + 1)
+    files = {"image": ("large.png", io.BytesIO(image_content), "image/png")}
+    data = {
+        "title": "Large Image",
+        "description": "ไฟล์รูปใหญ่เกิน",
+        "category": "วิชาการ",
+        "start_date": now.isoformat(),
+        "end_date": (now + timedelta(days=1)).isoformat(),
+    }
+    response = await client.post("/api/annc/", data=data, files=files, headers=headers)
+    assert response.status_code in (400, 413, 422)
+
+
+@pytest.mark.asyncio
+async def test_announcement_response_schema(client, sample_announcement):
+    response = await client.get(f"/api/annc/{sample_announcement.id}")
+    assert response.status_code == 200
+    data = response.json()
+    # ตรวจสอบ schema หลัก
+    assert set(data.keys()) >= {
+        "id",
+        "title",
+        "description",
+        "category",
+        "start_date",
+        "end_date",
+        "created_by",
+        "created_at",
+    }
+    assert isinstance(data["id"], int)
+    assert isinstance(data["title"], str)
+    assert isinstance(data["category"], str)
+
+
+@pytest.mark.asyncio
+async def test_create_announcement_with_invalid_jwt(client):
+    headers = {"Authorization": "Bearer invalid.token.value"}
+    now = datetime.now()
+    data = {
+        "title": "Invalid JWT",
+        "description": "token ผิด",
+        "category": "วิชาการ",
+        "start_date": now.isoformat(),
+        "end_date": (now + timedelta(days=1)).isoformat(),
+    }
+    response = await client.post("/api/annc/", data=data, headers=headers)
+    assert response.status_code in (401, 403)
