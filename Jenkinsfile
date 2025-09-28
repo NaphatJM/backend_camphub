@@ -69,6 +69,17 @@ pipeline {
                 sh 'docker build -t backend_camphub:latest .'
             }
         }
+        
+        stage('Deploy Container') {
+            agent any
+            steps {
+                sh '''
+                docker stop app || true
+                docker rm app || true
+                docker run -d --name app -p 8000:8000 backend_camphub:latest
+                '''
+            }
+        }
     }
 
     post {
