@@ -57,13 +57,13 @@ async def get_announcements(
     if category:
         count_stmt = count_stmt.where(Announcement.category == category)
 
-    count_result = await session.execute(count_stmt)
+    count_result = await session.exec(count_stmt)
     total = len(count_result.scalars().all())
 
     offset = (page - 1) * per_page
     stmt = stmt.offset(offset).limit(per_page).order_by(Announcement.created_at.desc())
 
-    result = await session.execute(stmt)
+    result = await session.exec(stmt)
     announcements = result.scalars().all()
 
     total_pages = math.ceil(total / per_page) if total > 0 else 1
@@ -106,14 +106,14 @@ async def get_announcements_by_category(
     )
 
     # Count total
-    count_result = await session.execute(stmt)
+    count_result = await session.exec(stmt)
     total = len(count_result.scalars().all())
 
     # Apply pagination
     offset = (page - 1) * per_page
     stmt = stmt.offset(offset).limit(per_page).order_by(Announcement.created_at.desc())
 
-    result = await session.execute(stmt)
+    result = await session.exec(stmt)
     announcements = result.scalars().all()
 
     total_pages = math.ceil(total / per_page) if total > 0 else 1

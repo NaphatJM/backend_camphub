@@ -13,14 +13,14 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 async def signup(payload: SignUpRequest, session: AsyncSession = Depends(get_session)):
     try:
         # Check username uniqueness
-        username_result = await session.execute(
+        username_result = await session.exec(
             select(User).where(User.username == payload.username)
         )
         if username_result.scalar_one_or_none():
             raise HTTPException(status_code=400, detail="ชื่อผู้ใช้นี้ถูกใช้แล้ว")
 
         # Check email uniqueness
-        email_result = await session.execute(
+        email_result = await session.exec(
             select(User).where(User.email == payload.email)
         )
         if email_result.scalar_one_or_none():
@@ -30,7 +30,7 @@ async def signup(payload: SignUpRequest, session: AsyncSession = Depends(get_ses
         if payload.faculty_id is not None:
             from app.models.faculty_model import Faculty
 
-            faculty_result = await session.execute(
+            faculty_result = await session.exec(
                 select(Faculty).where(Faculty.id == payload.faculty_id)
             )
             if not faculty_result.scalar_one_or_none():
@@ -39,7 +39,7 @@ async def signup(payload: SignUpRequest, session: AsyncSession = Depends(get_ses
         if payload.role_id is not None:
             from app.models.role_model import Role
 
-            role_result = await session.execute(
+            role_result = await session.exec(
                 select(Role).where(Role.id == payload.role_id)
             )
             if not role_result.scalar_one_or_none():
@@ -80,7 +80,7 @@ async def signup(payload: SignUpRequest, session: AsyncSession = Depends(get_ses
 
 @router.post("/signin", response_model=Token)
 async def signin(creds: LoginRequest, session: AsyncSession = Depends(get_session)):
-    result = await session.execute(select(User).where(User.email == creds.email))
+    result = await session.exec(select(User).where(User.email == creds.email))
     user = result.scalar_one_or_none()
     if not user or not verify_password(creds.password, user.hashed_password):
         raise HTTPException(

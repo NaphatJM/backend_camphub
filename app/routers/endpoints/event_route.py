@@ -119,7 +119,7 @@ async def get_events(
         stmt = stmt.where(and_(*filters))
 
     stmt = stmt.order_by(Event.created_at.desc())
-    events = (await session.execute(stmt)).scalars().all()
+    events = (await session.exec(stmt)).scalars().all()
 
     # Convert to response format with enrolled_count
     response_items = []
@@ -173,17 +173,15 @@ async def get_event_public_view(
 
 @router.get("/open/{event_id}", response_class=HTMLResponse)
 async def open_event_in_app(event_id: int):
-        """Lightweight HTML that attempts to open the Android app via custom scheme/intent, with graceful fallbacks.
+    """Lightweight HTML that attempts to open the Android app via custom scheme/intent, with graceful fallbacks.
 
-        Expected app deep link: campusapp://event/{event_id}
-        Android package: com.example.campusapp
-        """
-        scheme_url = f"campusapp://event/{event_id}"
-        intent_url = (
-                f"intent://event/{event_id}#Intent;scheme=campusapp;package=com.example.campusapp;end"
-        )
-        fallback_api = f"/api/events/public/{event_id}"
-        html = f"""
+    Expected app deep link: campusapp://event/{event_id}
+    Android package: com.example.campusapp
+    """
+    scheme_url = f"campusapp://event/{event_id}"
+    intent_url = f"intent://event/{event_id}#Intent;scheme=campusapp;package=com.example.campusapp;end"
+    fallback_api = f"/api/events/public/{event_id}"
+    html = f"""
 <!doctype html>
 <html lang=\"th\">
     <head>
@@ -227,7 +225,7 @@ async def open_event_in_app(event_id: int):
     </body>
     </html>
         """
-        return HTMLResponse(content=html, status_code=200)
+    return HTMLResponse(content=html, status_code=200)
 
 
 @router.get("/{event_id}", response_model=EventResponse)
@@ -316,7 +314,7 @@ async def update_event(
     await session.commit()
     await session.refresh(event)
 
-    result = await session.execute(
+    result = await session.exec(
         select(func.count(EventEnrollment.id)).where(
             EventEnrollment.event_id == event_id
         )
