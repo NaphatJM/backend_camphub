@@ -18,7 +18,7 @@ class LocationService:
     async def get_all(self) -> List[LocationRead]:
         result = await self.session.execute(select(Location))
         locations = result.scalars().all()
-        return [LocationRead.from_orm(loc) for loc in locations]
+        return [LocationRead.model_validate(loc) for loc in locations]
 
     # --------------------------
     # GET by ID
@@ -27,7 +27,7 @@ class LocationService:
         location = await self.session.get(Location, location_id)
         if not location:
             raise HTTPException(status_code=404, detail="Location not found")
-        return LocationRead.from_orm(location)
+        return LocationRead.model_validate(location)
 
     # --------------------------
     # CREATE
@@ -38,7 +38,7 @@ class LocationService:
         self.session.add(new_location)
         await self.session.commit()
         await self.session.refresh(new_location)
-        return LocationRead.from_orm(new_location)
+        return LocationRead.model_validate(new_location)
 
     # --------------------------
     # UPDATE
@@ -56,7 +56,7 @@ class LocationService:
         self.session.add(location)
         await self.session.commit()
         await self.session.refresh(location)
-        return LocationRead.from_orm(location)
+        return LocationRead.model_validate(location)
 
     # --------------------------
     # DELETE

@@ -11,6 +11,7 @@ from fastapi import (
 )
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from datetime import datetime
 import math
 
@@ -38,7 +39,6 @@ async def get_announcements(
         None, description="Filter by category"
     ),
     session: AsyncSession = Depends(get_session),
-    current_user: User = Depends(get_current_user),
 ):
     """Get announcements with optional category filter and pagination"""
 
@@ -95,7 +95,6 @@ async def get_announcements_by_category(
     page: int = Query(1, ge=1),
     per_page: int = Query(10, ge=1, le=100),
     session: AsyncSession = Depends(get_session),
-    current_user: User = Depends(get_current_user),
 ):
     """Get announcements by specific category"""
 
@@ -204,6 +203,10 @@ async def update_announcement(
     if not announcement:
         raise HTTPException(status_code=404, detail="ไม่พบข่าวประกาศ")
 
+    # ตรวจสอบ ownership
+    if announcement.created_by != current_user.id:
+        raise HTTPException(status_code=403, detail="คุณไม่มีสิทธิ์แก้ไขข่าวประกาศนี้")
+
     update_data = announcement_update.model_dump(exclude_unset=True)
 
     # Convert timezone-aware datetime to naive datetime for database
@@ -227,8 +230,17 @@ async def update_announcement(
             setattr(announcement, field, value)
         announcement.updated_at = datetime.now()
 
-        await session.commit()
-        await session.refresh(announcement)
+        try:
+            await session.commit()
+            await session.refresh(announcement)
+        except IntegrityError as e:
+            await session.rollback()
+            raise HTTPException(status_code=500, detail="เกิดข้อผิดพลาดในการอัปเดตข้อมูล")
+        except Exception as e:
+            await session.rollback()
+            raise HTTPException(
+                status_code=500, detail=f"เกิดข้อผิดพลาดในการอัปเดตข่าวประกาศ: {str(e)}"
+            )
 
     return announcement
 
@@ -243,11 +255,25 @@ async def delete_announcement(
     if not announcement:
         raise HTTPException(status_code=404, detail="ไม่พบข่าวประกาศ")
 
+    # ตรวจสอบ ownership
+    if announcement.created_by != current_user.id:
+        raise HTTPException(status_code=403, detail="คุณไม่มีสิทธิ์ลบข่าวประกาศนี้")
+
     # Delete associated image if exists
     if announcement.image_url:
         announcement_image_service.delete_image(announcement.image_url)
 
-    await session.delete(announcement)
-    await session.commit()
-
-    return {"message": "ลบข่าวประกาศเรียบร้อยแล้ว"}
+    try:
+        await session.delete(announcement)
+        await session.commit()
+        return {"message": "ลบข่าวประกาศเรียบร้อยแล้ว"}
+    except IntegrityError as e:
+        await session.rollback()
+        raise HTTPException(
+            status_code=400, detail="ไม่สามารถลบข่าวประกาศได้ เนื่องจากมีข้อมูลที่เกี่ยวข้อง"
+        )
+    except Exception as e:
+        await session.rollback()
+        raise HTTPException(
+            status_code=500, detail=f"เกิดข้อผิดพลาดในการลบข่าวประกาศ: {str(e)}"
+        )

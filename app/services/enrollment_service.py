@@ -128,7 +128,8 @@ class EnrollmentService:
                 course_code=e.course.course_code,
                 course_name=e.course.course_name,
                 schedules=[
-                    CourseScheduleReadWithRoom.from_orm(s) for s in e.course.schedules
+                    CourseScheduleReadWithRoom.model_validate(s)
+                    for s in e.course.schedules
                 ],
             )
             for e in enrollments
