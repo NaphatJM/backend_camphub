@@ -1,8 +1,21 @@
-FROM jenkins/jenkins:lts-jdk11
+FROM python:3.12-slim
 
-USER root
-RUN apt update && curl -fsSL https://get.docker.com | sh
-RUN usermod -aG docker jenkins
+# Set working directory
+WORKDIR /usr/src/app
 
-USER jenkins
+# Copy project files
+COPY pyproject.toml .
+COPY poetry.lock .
+COPY . .
 
+# ติดตั้ง pip, Poetry และ dependencies
+RUN pip install --upgrade pip \
+    && pip install poetry \
+    && poetry config virtualenvs.create false \
+    && poetry install --no-dev --no-interaction
+
+# Expose port
+EXPOSE 8000
+
+# Run FastAPI
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
