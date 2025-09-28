@@ -21,14 +21,14 @@ pipeline {
                 }
             }
             steps {
-                sh 'pip install --upgrade pip'
-                sh 'pip install coverage pytest'
+                // sh 'pip install --upgrade pip'
+                // sh 'pip install coverage pytest'
                 // ติดตั้ง Poetry
-                // sh 'curl -sSL https://install.python-poetry.org | python3 -'
-                // sh 'export PATH="$HOME/.local/bin:$PATH"'
+                sh 'curl -sSL https://install.python-poetry.org | python3 -'
+                sh 'export PATH="$HOME/.local/bin:$PATH"'
 
                 // ติดตั้ง dependencies
-                // sh '/root/.local/bin/poetry install --no-interaction'
+                sh '/root/.local/bin/poetry install --no-interaction'
                 // sh '/root/.local/bin/poetry run coverage run -m pytest tests/'
                 // sh '/root/.local/bin/poetry run coverage xml'
             }
@@ -60,6 +60,13 @@ pipeline {
                 timeout(time: 5, unit: 'MINUTES') {
                     waitForQualityGate abortPipeline: true
                 }
+            }
+        }
+
+        stage('Build Docker Image') {
+            agent any
+            steps {
+                sh 'docker build -t backend_camphub:latest .'
             }
         }
     }
