@@ -38,16 +38,18 @@ pipeline {
         stage('SonarQube Analysis') {
             steps {
                 script {
-                    docker.image('sonarsource/sonar-scanner-cli').inside {
-                        sh '''
-                            sonar-scanner \
-                                -Dsonar.projectKey=backend_camphub \
-                                -Dsonar.sources=app \
-                                -Dsonar.host.url=http://host.docker.internal:9001 \
-                                -Dsonar.login=${SONARQUBE} \
-                                -Dsonar.exclusions=**/tests/**,**/*.md \
-                                -Dsonar.python.ignoreHeaderComments=true
-                        '''
+                    withSonarQubeEnv('SonarQubeServer') {
+                        docker.image('sonarsource/sonar-scanner-cli').inside {
+                          sh '''
+                              sonar-scanner \
+                                  -Dsonar.projectKey=backend_camphub \
+                                  -Dsonar.sources=app \
+                                  -Dsonar.host.url=http://host.docker.internal:9001 \
+                                  -Dsonar.login=${SONARQUBE} \
+                                  -Dsonar.exclusions=**/tests/**,**/*.md \
+                                  -Dsonar.python.ignoreHeaderComments=true
+                          '''
+                        }
                     }
                 }
             }
