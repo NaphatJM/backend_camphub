@@ -163,7 +163,7 @@ class CourseScheduleService:
                 course_name=schedule.course.course_name,
                 credits=schedule.course.credits,
             )
-        data = CourseScheduleReadWithRoom.from_orm(schedule)
-        # Manually attach nested objects not auto-handled by from_orm
+        data = CourseScheduleReadWithRoom.model_validate(schedule)
+        # Manually attach nested objects not auto-handled by model_validate
         data.course = course_simple
         return data
