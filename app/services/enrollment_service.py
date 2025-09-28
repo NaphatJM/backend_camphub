@@ -50,6 +50,11 @@ class EnrollmentService:
 
     # 2. Enroll current user
     async def enroll(self, data: EnrollmentCreate) -> EnrollmentRead:
+        # ตรวจสอบว่า course มีอยู่จริงหรือไม่
+        course = await self.session.get(Course, data.course_id)
+        if not course:
+            raise HTTPException(status_code=404, detail="Course not found")
+
         # ตรวจสอบว่าผู้ใช้ enroll แล้วหรือยัง
         result = await self.session.execute(
             select(Enrollment).where(

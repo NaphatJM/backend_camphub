@@ -1,0 +1,10 @@
+#!/bin/bash
+# Run all tests with pytest
+echo "🚀 Running CampHub API Tests..."
+echo "================================"
+
+# Activate virtual environment and run tests
+source .venv/Scripts/activate && python -m pytest tests/ -v
+
+echo "================================"
+echo "✅ Test execution completed!"
