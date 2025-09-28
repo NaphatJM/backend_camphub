@@ -21,7 +21,7 @@ class RoomService:
             select(Room).options(selectinload(Room.location))
         )
         rooms = result.scalars().all()
-        return [RoomRead.from_orm(r) for r in rooms]
+        return [RoomRead.model_validate(r) for r in rooms]
 
     # --------------------------
     # GET by ID
@@ -32,7 +32,7 @@ class RoomService:
         )
         if not room:
             raise HTTPException(status_code=404, detail="Room not found")
-        return RoomRead.from_orm(room)
+        return RoomRead.model_validate(room)
 
     # --------------------------
     # CREATE
@@ -48,7 +48,7 @@ class RoomService:
         self.session.add(new_room)
         await self.session.commit()
         await self.session.refresh(new_room)
-        return RoomRead.from_orm(new_room)
+        return RoomRead.model_validate(new_room)
 
     # --------------------------
     # UPDATE
@@ -71,7 +71,7 @@ class RoomService:
         self.session.add(room)
         await self.session.commit()
         await self.session.refresh(room)
-        return RoomRead.from_orm(room)
+        return RoomRead.model_validate(room)
 
     # --------------------------
     # DELETE

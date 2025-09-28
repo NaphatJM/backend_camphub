@@ -4,6 +4,7 @@ from sqlalchemy import select, func, and_
 from sqlalchemy.orm import selectinload
 from typing import Optional
 from datetime import datetime
+from sqlalchemy.exc import IntegrityError
 
 from app.core.db import get_session
 from app.models import User, Announcement, AnnouncementBookmark
@@ -26,44 +27,41 @@ async def create_bookmark(
     if not announcement:
         raise HTTPException(status_code=404, detail="ไม่พบข่าวประกาศ")
 
-    # ตรวจสอบว่ายัง bookmark ไว้แล้วหรือไม่
-    existing_bookmark = await session.execute(
-        select(AnnouncementBookmark).where(
-            and_(
-                AnnouncementBookmark.user_id == current_user.id,
-                AnnouncementBookmark.announcement_id == announcement_id,
-            )
-        )
-    )
-    existing = existing_bookmark.scalar_one_or_none()
-
-    if existing:
-        raise HTTPException(status_code=400, detail="คุณได้ bookmark ข่าวประกาศนี้แล้ว")
-
-    # สร้าง bookmark ใหม่
     new_bookmark = AnnouncementBookmark(
         user_id=current_user.id, announcement_id=announcement_id
     )
 
-    session.add(new_bookmark)
-    await session.commit()
-    await session.refresh(new_bookmark)
+    # เพิ่ม proper constraint error handling
+    try:
+        session.add(new_bookmark)
+        await session.commit()
+        await session.refresh(new_bookmark)
 
-    # ดึงข้อมูล bookmark พร้อม announcement (ใช้ eager loading)
-    bookmark_with_announcement = await session.execute(
-        select(AnnouncementBookmark)
-        .options(selectinload(AnnouncementBookmark.announcement))
-        .where(AnnouncementBookmark.id == new_bookmark.id)
-    )
-    bookmark = bookmark_with_announcement.scalar_one()
+        # ดึงข้อมูล bookmark พร้อม announcement (ใช้ eager loading)
+        bookmark_with_announcement = await session.execute(
+            select(AnnouncementBookmark)
+            .options(selectinload(AnnouncementBookmark.announcement))
+            .where(AnnouncementBookmark.id == new_bookmark.id)
+        )
+        bookmark = bookmark_with_announcement.scalar_one()
 
-    return BookmarkResponse(
-        id=bookmark.id,
-        user_id=bookmark.user_id,
-        announcement_id=bookmark.announcement_id,
-        created_at=bookmark.created_at,
-        announcement=bookmark.announcement,
-    )
+        return BookmarkResponse(
+            id=bookmark.id,
+            user_id=bookmark.user_id,
+            announcement_id=bookmark.announcement_id,
+            created_at=bookmark.created_at,
+            announcement=bookmark.announcement,
+        )
+    except IntegrityError as e:
+        await session.rollback()
+        if "unique_user_announcement_bookmark" in str(e):
+            raise HTTPException(status_code=400, detail="คุณได้ bookmark ข่าวประกาศนี้แล้ว")
+        raise HTTPException(status_code=500, detail="เกิดข้อผิดพลาดในการบันทึกข้อมูล")
+    except Exception as e:
+        await session.rollback()
+        raise HTTPException(
+            status_code=500, detail=f"เกิดข้อผิดพลาดในการสร้าง bookmark: {str(e)}"
+        )
 
 
 @router.delete("/{announcement_id}/bookmark")
