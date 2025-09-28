@@ -26,8 +26,7 @@ pipeline {
                 sh 'export PATH="$HOME/.local/bin:$PATH"'
 
                 // ติดตั้ง dependencies
-                sh 'poetry install --no-interaction --only main'
-                sh 'poetry install --no-interaction --with dev'  // สำหรับ test
+                sh 'poetry install --no-interaction'
 
                 // รัน unit test และ generate coverage report
                 sh 'poetry run coverage run -m pytest tests/'
@@ -39,19 +38,14 @@ pipeline {
         stage('SonarQube Analysis') {
             steps {
                 script {
-                    // ใช้ SonarScanner CLI Docker image (Linux compatible)
-                    // -Dsonar.host.url=http://172.17.0.1:9001 <--- command check : ip addr show docker0
                     docker.image('sonarsource/sonar-scanner-cli').inside {
-                        withSonarQubeEnv('sonarqube-7.2') {
-                            sh '''
-                                sonar-scanner \
-                                    -Dsonar.projectKey=backend_camphub \
-                                    -Dsonar.sources=app \
-                                    -Dsonar.host.url=http://172.17.0.1:9001 \
-                                    -Dsonar.login=$SONARQUBE \
-                                    -Dsonar.python.coverage.reportPaths=coverage.xml
-                            '''
-                        }
+                        sh '''
+                            sonar-scanner \
+                                -Dsonar.projectKey=backend_camphub \
+                                -Dsonar.sources=app \
+                                -Dsonar.host.url=http://host.docker.internal:9001 \
+                                -Dsonar.login=${SONARQUBE} \
+                        '''
                     }
                 }
             }
