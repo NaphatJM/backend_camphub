@@ -12,7 +12,7 @@ COPY . .
 RUN pip install --upgrade pip \
     && pip install poetry \
     && poetry config virtualenvs.create false \
-    && poetry install --no-dev --no-interaction
+    && poetry install --no-interaction
 
 # Expose port
 EXPOSE 8000
