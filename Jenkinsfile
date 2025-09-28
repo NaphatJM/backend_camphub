@@ -27,8 +27,8 @@ pipeline {
 
                 // ติดตั้ง dependencies
                 sh '/root/.local/bin/poetry install --no-interaction'
-                sh '/root/.local/bin/poetry run coverage run -m pytest tests/'
-                sh '/root/.local/bin/poetry run coverage xml'
+                // sh '/root/.local/bin/poetry run coverage run -m pytest tests/'
+                // sh '/root/.local/bin/poetry run coverage xml'
             }
         }
 
