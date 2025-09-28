@@ -14,6 +14,87 @@ from app.schemas.announcement_schema import BookmarkResponse, BookmarkListRespon
 router = APIRouter(prefix="/annc", tags=["bookmarks"])
 
 
+@router.get("/bookmarks", response_model=BookmarkListResponse)
+async def get_user_bookmarks(
+    page: int = Query(1, ge=1),
+    per_page: int = Query(10, ge=1, le=100),
+    current_user: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_session),
+):
+    """ดู bookmark ทั้งหมดของผู้ใช้ปัจจุบัน"""
+
+    # นับจำนวน bookmark ทั้งหมด
+    total_count_result = await session.execute(
+        select(func.count(AnnouncementBookmark.id)).where(
+            AnnouncementBookmark.user_id == current_user.id
+        )
+    )
+    total = total_count_result.scalar()
+
+    # คำนวณ offset
+    offset = (page - 1) * per_page
+
+    # ดึงข้อมูล bookmarks พร้อม announcement (ใช้ eager loading)
+    bookmarks_result = await session.execute(
+        select(AnnouncementBookmark)
+        .options(selectinload(AnnouncementBookmark.announcement))
+        .where(AnnouncementBookmark.user_id == current_user.id)
+        .order_by(AnnouncementBookmark.created_at.desc())
+        .offset(offset)
+        .limit(per_page)
+    )
+    bookmarks = bookmarks_result.scalars().all()
+
+    # แปลงเป็น response format
+    bookmark_responses = []
+    for bookmark in bookmarks:
+        try:
+            # ใช้ model_validate สำหรับความปลอดภัย
+            bookmark_data = {
+                "id": bookmark.id,
+                "user_id": bookmark.user_id,
+                "announcement_id": bookmark.announcement_id,
+                "created_at": bookmark.created_at,
+                "announcement": bookmark.announcement,
+            }
+
+            bookmark_response = BookmarkResponse.model_validate(bookmark_data)
+            bookmark_responses.append(bookmark_response)
+        except Exception as e:
+            # ถ้ามีปัญหาให้สร้างแบบไม่มี announcement
+            try:
+                bookmark_data = {
+                    "id": bookmark.id,
+                    "user_id": bookmark.user_id,
+                    "announcement_id": bookmark.announcement_id,
+                    "created_at": bookmark.created_at,
+                    "announcement": None,
+                }
+                bookmark_response = BookmarkResponse.model_validate(bookmark_data)
+                bookmark_responses.append(bookmark_response)
+            except Exception as e2:
+                print(
+                    f"Error creating BookmarkResponse for bookmark {bookmark.id}: {e2}"
+                )
+                continue
+
+    # คำนวณจำนวนหน้าทั้งหมด
+    total_pages = max(1, (total + per_page - 1) // per_page) if total > 0 else 1
+
+    try:
+        return BookmarkListResponse(
+            bookmarks=bookmark_responses,
+            total=total,
+            page=page,
+            per_page=per_page,
+            total_pages=total_pages,
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail=f"เกิดข้อผิดพลาดในการสร้าง response: {str(e)}"
+        )
+
+
 @router.post("/{announcement_id}/bookmark", response_model=BookmarkResponse)
 async def create_bookmark(
     announcement_id: int,
@@ -90,61 +171,6 @@ async def delete_bookmark(
     await session.commit()
 
     return {"message": "ลบ bookmark เรียบร้อยแล้ว"}
-
-
-@router.get("/bookmarks", response_model=BookmarkListResponse)
-async def get_user_bookmarks(
-    page: int = Query(1, ge=1),
-    per_page: int = Query(10, ge=1, le=100),
-    current_user: User = Depends(get_current_user),
-    session: AsyncSession = Depends(get_session),
-):
-    """ดู bookmark ทั้งหมดของผู้ใช้ปัจจุบัน"""
-
-    # นับจำนวน bookmark ทั้งหมด
-    total_count_result = await session.execute(
-        select(func.count(AnnouncementBookmark.id)).where(
-            AnnouncementBookmark.user_id == current_user.id
-        )
-    )
-    total = total_count_result.scalar()
-
-    # คำนวณ offset
-    offset = (page - 1) * per_page
-
-    # ดึงข้อมูล bookmarks พร้อม announcement (ใช้ eager loading)
-    bookmarks_result = await session.execute(
-        select(AnnouncementBookmark)
-        .options(selectinload(AnnouncementBookmark.announcement))
-        .where(AnnouncementBookmark.user_id == current_user.id)
-        .order_by(AnnouncementBookmark.created_at.desc())
-        .offset(offset)
-        .limit(per_page)
-    )
-    bookmarks = bookmarks_result.scalars().all()
-
-    # แปลงเป็น response format
-    bookmark_responses = [
-        BookmarkResponse(
-            id=bookmark.id,
-            user_id=bookmark.user_id,
-            announcement_id=bookmark.announcement_id,
-            created_at=bookmark.created_at,
-            announcement=bookmark.announcement,
-        )
-        for bookmark in bookmarks
-    ]
-
-    # คำนวณจำนวนหน้าทั้งหมด
-    total_pages = (total + per_page - 1) // per_page
-
-    return BookmarkListResponse(
-        bookmarks=bookmark_responses,
-        total=total,
-        page=page,
-        per_page=per_page,
-        total_pages=total_pages,
-    )
 
 
 @router.get("/{announcement_id}/bookmark-status")
