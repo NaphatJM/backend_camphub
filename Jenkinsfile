@@ -69,14 +69,18 @@ pipeline {
                 sh 'docker build -t backend_camphub:latest .'
             }
         }
-        
+
         stage('Deploy Container') {
             agent any
             steps {
                 sh '''
-                docker stop app || true
-                docker rm app || true
-                docker run -d --name app -p 8000:8000 backend_camphub:latest
+                docker stop backend_camphub || true
+                docker rm backend_camphub || true
+                docker run -d \
+                        --name backend_camphub \
+                        -p 8000:8000 \
+                        backend_camphub:latest \
+                        uvicorn app.main:app --host 0.0.0.0 --port 8000
                 '''
             }
         }
