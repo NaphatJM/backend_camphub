@@ -1,4 +1,4 @@
-from sqlalchemy import DateTime, ForeignKey, UniqueConstraint
+from sqlalchemy import UniqueConstraint
 from sqlmodel import SQLModel, Field, Relationship
 from datetime import datetime
 from typing import Optional, TYPE_CHECKING
@@ -12,7 +12,7 @@ class AnnouncementBookmark(SQLModel, table=True):
     __tablename__ = "announcement_bookmarks"
 
     id: Optional[int] = Field(default=None, primary_key=True)
-    user_id: int = Field(foreign_key="users.id")
+    user_id: int = Field(foreign_key="user.id")
     announcement_id: int = Field(foreign_key="announcements.id")
     created_at: datetime = Field(default_factory=datetime.now)
 
