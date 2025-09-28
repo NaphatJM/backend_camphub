@@ -11,10 +11,10 @@ from app.models import User, Announcement, AnnouncementBookmark
 from app.core.deps import get_current_user
 from app.schemas.announcement_schema import BookmarkResponse, BookmarkListResponse
 
-router = APIRouter(prefix="/annc", tags=["bookmarks"])
+router = APIRouter(prefix="/annc/bookmarks", tags=["bookmarks"])
 
 
-@router.get("/bookmarks", response_model=BookmarkListResponse)
+@router.get("/", response_model=BookmarkListResponse)
 async def get_user_bookmarks(
     page: int = Query(1, ge=1),
     per_page: int = Query(10, ge=1, le=100),
@@ -95,7 +95,7 @@ async def get_user_bookmarks(
         )
 
 
-@router.post("/{announcement_id}/bookmark", response_model=BookmarkResponse)
+@router.post("/{announcement_id}", response_model=BookmarkResponse)
 async def create_bookmark(
     announcement_id: int,
     current_user: User = Depends(get_current_user),
@@ -145,7 +145,7 @@ async def create_bookmark(
         )
 
 
-@router.delete("/{announcement_id}/bookmark")
+@router.delete("/{announcement_id}")
 async def delete_bookmark(
     announcement_id: int,
     current_user: User = Depends(get_current_user),
@@ -173,7 +173,7 @@ async def delete_bookmark(
     return {"message": "ลบ bookmark เรียบร้อยแล้ว"}
 
 
-@router.get("/{announcement_id}/bookmark-status")
+@router.get("/{announcement_id}/status")
 async def check_bookmark_status(
     announcement_id: int,
     current_user: User = Depends(get_current_user),
