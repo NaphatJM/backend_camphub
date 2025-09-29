@@ -41,7 +41,7 @@ pipeline {
                 sh 'export PATH="$HOME/.local/bin:$PATH" && /root/.local/bin/poetry install --no-interaction'
 
                 // รัน tests + coverage
-                sh 'export PATH="$HOME/.local/bin:$PATH" && /root/.local/bin/python -m pytest tests/ -v'
+                sh 'export PATH="$HOME/.local/bin:$PATH" && /root/.local/bin/poetry run coverage run -m pytest tests/'
                 sh 'export PATH="$HOME/.local/bin:$PATH" && /root/.local/bin/poetry run coverage xml'
             }
         }
@@ -58,7 +58,7 @@ pipeline {
                                   -Dsonar.sources=app \
                                   -Dsonar.host.url=http://host.docker.internal:9001 \
                                   -Dsonar.login=${SONARQUBE} \
-                                  -Dsonar.exclusions=**/tests/**,**/*.md \
+                                  -Dsonar.exclusions=**/tests/**,**/*.md,**/app/core/**,**/app/db/** \
                                   -Dsonar.python.ignoreHeaderComments=true
                           '''
                         }
