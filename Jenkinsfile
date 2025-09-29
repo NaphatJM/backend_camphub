@@ -1,11 +1,6 @@
 pipeline {
     agent any  // ใช้ Jenkins node ที่มี Docker CLI
 
-    options {
-        // ล้าง workspace ก่อนเริ่ม pipeline
-        wipeWorkspace()
-    }
-
     environment {
         SONARQUBE = credentials('sonar-token')   // Jenkins Credentials สำหรับ SonarQube token
         SQLDB_URL = credentials('SQLDB_URL')       
@@ -14,6 +9,11 @@ pipeline {
     }
 
     stages {
+        stage('Clean Workspace') {
+            steps {
+                deleteDir() // ล้าง workspace ก่อนเริ่ม pipeline
+            }
+        }
 
         stage('Checkout') {
             steps {
