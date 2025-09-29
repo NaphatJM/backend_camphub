@@ -21,6 +21,8 @@ class Event(SQLModel, table=True):
     )
     is_active: bool = Field(default=True)
     image_url: Optional[str] = None
+    # Store only place name (string). Coordinates come from locations catalog.
+    location: Optional[str] = None
     created_by: int = Field(foreign_key="user.id")
     created_at: datetime = Field(default_factory=datetime.now)
     updated_by: int = Field(foreign_key="user.id")

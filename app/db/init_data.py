@@ -151,6 +151,7 @@ async def init_demo_events():
                     capacity=200,
                     is_active=True,
                     image_url="https://images.unsplash.com/photo-1758691736591-5bf31a5d0dea?q=80&w=1332&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+                    location="อาคารเรียนและปฏิบัติการพื้นฐานทางวิทยาศาสตร์",
                     created_by=1,  # Admin
                     updated_by=1,
                     created_at=now,
@@ -164,6 +165,7 @@ async def init_demo_events():
                     capacity=100,
                     is_active=True,
                     image_url="https://images.unsplash.com/photo-1758685848261-16a5a9e68811?q=80&w=1332&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+                    location="อาคารวิจัยวิศวกรรมประยุกต์สิรินธร",
                     created_by=2,  # Professor
                     updated_by=2,
                     created_at=now,
@@ -174,9 +176,10 @@ async def init_demo_events():
                     description="งานกีฬาสีประจำปีของมหาวิทยาลัย แข่งขันกีฬาหลากหลายประเภท ทั้งกีฬาในร่มและกลางแจ้ง เชิญชวนนักศึกษาทุกคนร่วมเชียร์และเป็นส่วนหนึ่งของความสนุกสนาน",
                     start_date=now + timedelta(days=25),
                     end_date=now + timedelta(days=27),
-                    capacity=500,
+                    capacity=None,
                     is_active=True,
                     image_url="https://images.unsplash.com/photo-1572579967902-154db90ca5be?q=80&w=1169&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+                    location="อาคารเรียนและปฏิบัติการพื้นฐานทางวิทยาศาสตร์",
                     created_by=1,  # Admin
                     updated_by=1,
                     created_at=now,
@@ -254,10 +257,16 @@ async def init_locations_and_rooms():
             return
 
         loc1 = Location(
-            name="อาคารเรียนรวม 1", code="B1", latitude=13.736717, longitude=100.523186
+            name="อาคารเรียนและปฏิบัติการพื้นฐานทางวิทยาศาสตร์",
+            code="BSc",
+            latitude=7.006472135413086,
+            longitude=100.49951107880403,
         )
         loc2 = Location(
-            name="อาคารวิศวกรรมศาสตร์", code="ENG", latitude=13.7375, longitude=100.5250
+            name="อาคารวิจัยวิศวกรรมประยุกต์สิรินธร",
+            code="S",
+            latitude=7.006327821282247,
+            longitude=100.50252641168618,
         )
 
         session.add_all([loc1, loc2])
@@ -267,17 +276,17 @@ async def init_locations_and_rooms():
         room1 = Room(
             name="A101",
             location_id=loc1.id,
-            description="ห้องเรียนใหญ่ชั้น 1 อาคารเรียนรวม 1",
+            description="ห้องบรรยาย BSc101 ชั้น 1 อาคารเรียนและปฏิบัติการพื้นฐานทางวิทยาศาสตร์",
         )
         room2 = Room(
             name="B201",
             location_id=loc2.id,
-            description="ห้องเรียนชั้น 2 อาคารวิศวกรรมศาสตร์",
+            description="ห้องบรรยาย S201 ชั้น 2 อาคารวิจัยวิศวกรรมประยุกต์สิรินธร",
         )
         room3 = Room(
             name="C301",
             location_id=loc2.id,
-            description="ห้องเรียนชั้น 3 อาคารวิศวกรรมศาสตร์",
+            description="ห้องบรรยาย S301 ชั้น 3 อาคารวิจัยวิศวกรรมประยุกต์สิรินธร",
         )
 
         session.add_all([room1, room2, room3])
