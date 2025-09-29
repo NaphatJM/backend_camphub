@@ -3,17 +3,12 @@ pipeline {
 
     environment {
         SONARQUBE = credentials('sonar-token')   // Jenkins Credentials สำหรับ SonarQube token
-        SQLDB_URL = credentials('SQLDB_URL')       
+        SQLDB_URL = credentials('SQLDB_URL')       // Jenkins credentials ID
         SECRET_KEY = credentials('SECRET_KEY')
         JWT_SECRET_KEY = credentials('JWT_SECRET_KEY')
     }
 
     stages {
-        stage('Clean Workspace') {
-            steps {
-                deleteDir() // ล้าง workspace ก่อนเริ่ม pipeline
-            }
-        }
 
         stage('Checkout') {
             steps {
@@ -32,6 +27,7 @@ pipeline {
                 sh 'curl -sSL https://install.python-poetry.org | python3 -'
                 sh 'export PATH="$HOME/.local/bin:$PATH" && /root/.local/bin/poetry --version'
 
+                // ตรวจสอบ lock file ถ้า mismatch ให้ regenerate
                 sh '''
                 set -e
                 export PATH="$HOME/.local/bin:$PATH"
@@ -41,8 +37,10 @@ pipeline {
                 fi
                 '''
 
+                // ติดตั้ง dependencies
                 sh 'export PATH="$HOME/.local/bin:$PATH" && /root/.local/bin/poetry install --no-interaction'
 
+                // รัน tests + coverage
                 sh 'export PATH="$HOME/.local/bin:$PATH" && /root/.local/bin/poetry run coverage run -m pytest tests/'
                 sh 'export PATH="$HOME/.local/bin:$PATH" && /root/.local/bin/poetry run coverage xml -o coverage.xml'
             }
@@ -68,6 +66,7 @@ pipeline {
                 }
             }
         }
+
 
         stage('Quality Gate') {
             steps {
