@@ -28,7 +28,7 @@ pipeline {
                 // sh 'pip install coverage pytest'
                 // ติดตั้ง Poetry
                 sh 'curl -sSL https://install.python-poetry.org | python3 -'
-                // sh 'export PATH="$HOME/.local/bin:$PATH"'
+                sh 'export PATH="$HOME/.local/bin:$PATH"'
 
                 // ติดตั้ง dependencies
                 sh '/root/.local/bin/poetry install --no-interaction'
