@@ -59,7 +59,7 @@ pipeline {
                                     -Dsonar.token=${SONARQUBE} \
                                     -Dsonar.exclusions=**/tests/**,**/*.md,**/app/core/** \
                                     -Dsonar.python.ignoreHeaderComments=true \
-                                    -Dsonar.python.coverage.reportPaths=${env.WORKSPACE}/coverage.xml \
+                                    -Dsonar.python.coverage.reportPaths=coverage.xml \
                                     -Dsonar.python.version=3.12
                             '''
                         }
