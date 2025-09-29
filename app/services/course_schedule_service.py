@@ -12,6 +12,8 @@ from app.schemas.course_schedule_schema import (
 )
 from app.schemas.course_schema import CourseSimple
 
+NOT_FOUND_SCHEDULE_MSG = "Schedule not found"
+
 
 class CourseScheduleService:
     def __init__(self, session: AsyncSession, current_user: Optional[User] = None):
@@ -44,7 +46,7 @@ class CourseScheduleService:
             ),
         )
         if not schedule:
-            raise HTTPException(status_code=404, detail="Schedule not found")
+            raise HTTPException(status_code=404, detail=NOT_FOUND_SCHEDULE_MSG)
         return self._to_read_with_room(schedule)
 
     # --------------------------
@@ -93,7 +95,7 @@ class CourseScheduleService:
         self._check_permission()
         schedule = await self.session.get(CourseSchedule, schedule_id)
         if not schedule:
-            raise HTTPException(status_code=404, detail="Schedule not found")
+            raise HTTPException(status_code=404, detail=NOT_FOUND_SCHEDULE_MSG)
 
         update_data = data.model_dump(exclude_unset=True)
 
@@ -118,7 +120,7 @@ class CourseScheduleService:
         self._check_permission()
         schedule = await self.session.get(CourseSchedule, schedule_id)
         if not schedule:
-            raise HTTPException(status_code=404, detail="Schedule not found")
+            raise HTTPException(status_code=404, detail=NOT_FOUND_SCHEDULE_MSG)
 
         await self.session.delete(schedule)
         await self.session.commit()
