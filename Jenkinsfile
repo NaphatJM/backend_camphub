@@ -1,5 +1,8 @@
 pipeline {
-    agent any  // ใช้ Jenkins node ที่มี Docker CLI
+    agent {
+        label 'any'
+        customWorkspace '/var/jenkins_home/workspace/backend_camphub'
+    }  // ใช้ Jenkins node ที่มี Docker CLI
 
     environment {
         SONARQUBE = credentials('sonar-token')   // Jenkins Credentials สำหรับ SonarQube token
@@ -50,8 +53,9 @@ pipeline {
             steps {
                 script {
                     withSonarQubeEnv('SonarQubeServer') {
-                        docker.image('sonarsource/sonar-scanner-cli').inside("-v /var/jenkins_home/workspace/backend_camphub@2:/workspace -w /workspace") {
+                        docker.image('sonarsource/sonar-scanner-cli').inside {
                           sh '''
+                              ls -l coverage.xml
                               sonar-scanner \
                                   -Dsonar.projectKey=backend_camphub \
                                   -Dsonar.sources=app \
