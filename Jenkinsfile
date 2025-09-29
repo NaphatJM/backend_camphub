@@ -1,13 +1,14 @@
 pipeline {
     agent any  // ใช้ Jenkins node ที่มี Docker CLI
+
     options {
-        // กำหนด workspace ให้ชัดเจน
-        customWorkspace '/var/jenkins_home/workspace/backend_camphub'
+        // ล้าง workspace ก่อนเริ่ม pipeline
+        wipeWorkspace()
     }
 
     environment {
         SONARQUBE = credentials('sonar-token')   // Jenkins Credentials สำหรับ SonarQube token
-        SQLDB_URL = credentials('SQLDB_URL')       // Jenkins credentials ID
+        SQLDB_URL = credentials('SQLDB_URL')       
         SECRET_KEY = credentials('SECRET_KEY')
         JWT_SECRET_KEY = credentials('JWT_SECRET_KEY')
     }
@@ -31,7 +32,6 @@ pipeline {
                 sh 'curl -sSL https://install.python-poetry.org | python3 -'
                 sh 'export PATH="$HOME/.local/bin:$PATH" && /root/.local/bin/poetry --version'
 
-                // ตรวจสอบ lock file ถ้า mismatch ให้ regenerate
                 sh '''
                 set -e
                 export PATH="$HOME/.local/bin:$PATH"
@@ -41,10 +41,8 @@ pipeline {
                 fi
                 '''
 
-                // ติดตั้ง dependencies
                 sh 'export PATH="$HOME/.local/bin:$PATH" && /root/.local/bin/poetry install --no-interaction'
 
-                // รัน tests + coverage
                 sh 'export PATH="$HOME/.local/bin:$PATH" && /root/.local/bin/poetry run coverage run -m pytest tests/'
                 sh 'export PATH="$HOME/.local/bin:$PATH" && /root/.local/bin/poetry run coverage xml -o coverage.xml'
             }
@@ -54,14 +52,13 @@ pipeline {
             steps {
                 script {
                     withSonarQubeEnv('SonarQubeServer') {
-                        docker.image('sonarsource/sonar-scanner-cli').inside("-v /var/jenkins_home/workspace/backend_camphub@2:/workspace -w /workspace") {
+                        docker.image('sonarsource/sonar-scanner-cli').inside {
                           sh '''
-                              ls -l coverage.xml
                               sonar-scanner \
                                   -Dsonar.projectKey=backend_camphub \
                                   -Dsonar.sources=app \
                                   -Dsonar.host.url=http://host.docker.internal:9001 \
-                                  -Dsonar.token=${SONARQUBE} \
+                                  -Dsonar.login=${SONARQUBE} \
                                   -Dsonar.exclusions=**/tests/**,**/*.md \
                                   -Dsonar.python.ignoreHeaderComments=true \
                                   -Dsonar.python.coverage.reportPaths=coverage.xml
@@ -71,7 +68,6 @@ pipeline {
                 }
             }
         }
-
 
         stage('Quality Gate') {
             steps {
