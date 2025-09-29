@@ -24,16 +24,25 @@ pipeline {
                 }
             }
             steps {
-                // sh 'pip install --upgrade pip'
-                // sh 'pip install coverage pytest'
-                // ติดตั้ง Poetry
                 sh 'curl -sSL https://install.python-poetry.org | python3 -'
-                sh 'export PATH="$HOME/.local/bin:$PATH"'
+                sh 'export PATH="$HOME/.local/bin:$PATH" && /root/.local/bin/poetry --version'
+
+                // ตรวจสอบ lock file ถ้า mismatch ให้ regenerate
+                sh '''
+                set -e
+                export PATH="$HOME/.local/bin:$PATH"
+                if ! /root/.local/bin/poetry check --lock; then
+                    echo "⚠️  pyproject.toml และ poetry.lock ไม่ตรงกัน → regenerate lock file"
+                    /root/.local/bin/poetry lock
+                fi
+                '''
 
                 // ติดตั้ง dependencies
-                sh '/root/.local/bin/poetry install --no-interaction'
-                sh '/root/.local/bin/poetry run coverage run -m pytest tests/'
-                sh '/root/.local/bin/poetry run coverage xml'
+                sh 'export PATH="$HOME/.local/bin:$PATH" && /root/.local/bin/poetry install --no-interaction'
+
+                // รัน tests + coverage
+                sh 'export PATH="$HOME/.local/bin:$PATH" && /root/.local/bin/poetry run coverage run -m pytest tests/'
+                sh 'export PATH="$HOME/.local/bin:$PATH" && /root/.local/bin/poetry run coverage xml'
             }
         }
 
