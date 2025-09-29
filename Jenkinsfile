@@ -42,7 +42,7 @@ pipeline {
 
                 // รัน tests + coverage
                 sh 'export PATH="$HOME/.local/bin:$PATH" && /root/.local/bin/poetry run coverage run -m pytest tests/'
-                sh 'export PATH="$HOME/.local/bin:$PATH" && /root/.local/bin/poetry run coverage xml'
+                sh 'export PATH="$HOME/.local/bin:$PATH" && /root/.local/bin/poetry run coverage xml -o coverage.xml'
             }
         }
 
@@ -51,7 +51,7 @@ pipeline {
             steps {
                 script {
                     withSonarQubeEnv('SonarQubeServer') {
-                        docker.image('sonarsource/sonar-scanner-cli').inside {
+                        docker.image('sonarsource/sonar-scanner-cli').inside("-v ${env.WORKSPACE}:${env.WORKSPACE}") {
                           sh '''
                               sonar-scanner \
                                   -Dsonar.projectKey=backend_camphub \
@@ -60,6 +60,7 @@ pipeline {
                                   -Dsonar.login=${SONARQUBE} \
                                   -Dsonar.exclusions=**/tests/**,**/*.md,**/app/core/** \
                                   -Dsonar.python.ignoreHeaderComments=true
+                                  -Dsonar.python.coverage.reportPaths=coverage.xml
                           '''
                         }
                     }
