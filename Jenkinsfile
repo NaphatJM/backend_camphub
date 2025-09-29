@@ -53,6 +53,7 @@ pipeline {
                     withSonarQubeEnv('SonarQubeServer') {
                         docker.image('sonarsource/sonar-scanner-cli').inside {
                             sh '''
+                                export PATH="$HOME/.local/bin:$PATH"
                                 sonar-scanner \
                                     -Dsonar.projectKey=backend_camphub \
                                     -Dsonar.sources=app \
