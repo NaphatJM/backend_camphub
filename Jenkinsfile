@@ -21,6 +21,7 @@ pipeline {
                 docker {
                     image 'python:3.12'
                     args '-u root:root -v /var/run/docker.sock:/var/run/docker.sock'
+                    reuseNode true
                 }
             }
             steps {
