@@ -45,30 +45,31 @@ pipeline {
                 sh 'export PATH="$HOME/.local/bin:$PATH" && /root/.local/bin/poetry run coverage xml -o coverage.xml'
             }
         }
-
-
+        
         stage('SonarQube Analysis') {
             steps {
                 script {
                     withSonarQubeEnv('SonarQubeServer') {
                         docker.image('sonarsource/sonar-scanner-cli').inside("-v ${env.WORKSPACE}:${env.WORKSPACE}") {
-                            sh '''
+                            sh """
                                 cd ${env.WORKSPACE}
                                 sonar-scanner \
                                     -Dsonar.projectKey=backend_camphub \
                                     -Dsonar.sources=app \
                                     -Dsonar.tests=tests \
                                     -Dsonar.host.url=http://host.docker.internal:9001 \
-                                    -Dsonar.login=${SONARQUBE} \
+                                    -Dsonar.token=${SONAR_TOKEN} \
                                     -Dsonar.exclusions=**/tests/**,**/*.md,**/app/core/** \
                                     -Dsonar.python.ignoreHeaderComments=true \
                                     -Dsonar.python.coverage.reportPaths=${env.WORKSPACE}/coverage.xml \
-                            '''
+                                    -Dsonar.python.version=3.12
+                            """
                         }
                     }
                 }
             }
         }
+
 
         stage('Quality Gate') {
             steps {
