@@ -51,17 +51,18 @@ pipeline {
             steps {
                 script {
                     withSonarQubeEnv('SonarQubeServer') {
-                        docker.image('sonarsource/sonar-scanner-cli').inside {
-                          sh '''
-                              sonar-scanner \
-                                  -Dsonar.projectKey=backend_camphub \
-                                  -Dsonar.sources=app \
-                                  -Dsonar.host.url=http://host.docker.internal:9001 \
-                                  -Dsonar.login=${SONARQUBE} \
-                                  -Dsonar.exclusions=**/tests/**,**/*.md,**/app/core/** \
-                                  -Dsonar.python.ignoreHeaderComments=true \
-                                  -Dsonar.python.coverage.reportPaths=coverage.xml
-                          '''
+                        docker.image('sonarsource/sonar-scanner-cli').inside("-v ${WORKSPACE}:${WORKSPACE} -w ${WORKSPACE}") {
+                            sh '''
+                                sonar-scanner \
+                                    -Dsonar.projectKey=backend_camphub \
+                                    -Dsonar.sources=app \
+                                    -Dsonar.host.url=http://host.docker.internal:9001 \
+                                    -Dsonar.login=${SONARQUBE} \
+                                    -Dsonar.exclusions=**/tests/**,**/*.md,**/app/core/** \
+                                    -Dsonar.python.ignoreHeaderComments=true \
+                                    -Dsonar.python.coverage.reportPaths=${WORKSPACE}/coverage.xml \
+                                    -Dsonar.tests=tests
+                            '''
                         }
                     }
                 }
