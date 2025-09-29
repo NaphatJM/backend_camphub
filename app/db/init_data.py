@@ -60,14 +60,22 @@ async def init_faculties():
             return
 
         faculties = [
-            Faculty(name="วิศวกรรมศาสตร์"),
-            Faculty(name="วิทยาศาสตร์"),
-            Faculty(name="ครุศาสตร์"),
-            Faculty(name="มนุษยศาสตร์"),
-            Faculty(name="สังคมศาสตร์"),
-            Faculty(name="บริหารธุรกิจ"),
-            Faculty(name="เทคโนโลยีสารสนเทศ"),
-            Faculty(name="การแพทย์"),
+            Faculty(name="วิศวกรรมศาสตร์"),         # Engineering
+            Faculty(name="วิทยาศาสตร์"),           # Sciences
+            Faculty(name="อุตสาหกรรมเกษตร"),       # Agro-Industry
+            Faculty(name="ทันตแพทยศาสตร์"),        # Dentistry
+            Faculty(name="เศรษฐศาสตร์"),           # Economics
+            Faculty(name="การจัดการสิ่งแวดล้อม"),   # Environment Management
+            Faculty(name="นิติศาสตร์"),            # Law
+            Faculty(name="ศิลปศาสตร์"),            # Liberal Arts
+            Faculty(name="วิทยาการจัดการ"),         # Management Sciences
+            Faculty(name="เทคนิคการแพทย์"),         # Medical Technology
+            Faculty(name="แพทยศาสตร์"),            # Medicine
+            Faculty(name="ทรัพยากรธรรมชาติ"),      # Natural Resources
+            Faculty(name="พยาบาลศาสตร์"),          # Nursing
+            Faculty(name="เภสัชศาสตร์"),           # Pharmaceutical Sciences
+            Faculty(name="การแพทย์แผนไทย"),        # Traditional Thai Medicine
+            Faculty(name="สัตวแพทยศาสตร์"),        # Veterinary Sciences
         ]
         session.add_all(faculties)
         await session.commit()
@@ -89,10 +97,10 @@ async def init_demo_users():
         )
         eng_faculty = eng_faculty.scalars().first()
 
-        it_faculty = await session.execute(
-            select(Faculty).where(Faculty.name == "เทคโนโลยีสารสนเทศ")
+        science_faculty = await session.execute(
+            select(Faculty).where(Faculty.name == "วิทยาศาสตร์")
         )
-        it_faculty = it_faculty.scalars().first()
+        science_faculty = science_faculty.scalars().first()
 
         users = [
             User(
@@ -120,7 +128,7 @@ async def init_demo_users():
                 first_name="Jane",
                 last_name="Doe",
                 birth_date=date(2000, 8, 20),
-                faculty_id=it_faculty.id if it_faculty else 2,
+                faculty_id=science_faculty.id if science_faculty else None,
                 year_of_study=3,
                 hashed_password=hash_password("student123"),
                 role_id=2,
@@ -193,6 +201,7 @@ async def init_demo_events():
                     capacity=300,
                     is_active=True,
                     image_url="https://images.unsplash.com/photo-1519389950473-47ba0277781c?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+                    location="อาคารวิจัยวิศวกรรมประยุกต์สิรินธร",
                     created_by=2,
                     updated_by=2,
                     created_at=now,
@@ -206,6 +215,7 @@ async def init_demo_events():
                     capacity=80,
                     is_active=True,
                     image_url="https://images.unsplash.com/photo-1660616246653-e2c57d1077b9?q=80&w=1331&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+                    location="อาคารเรียนและปฏิบัติการพื้นฐานทางวิทยาศาสตร์",
                     created_by=1,
                     updated_by=1,
                     created_at=now,
@@ -221,6 +231,7 @@ async def init_demo_events():
                     capacity=400,
                     is_active=True,
                     image_url="https://images.unsplash.com/photo-1606761568499-6d2451b23c66?q=80&w=1074&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+                    location="อาคารวิจัยวิศวกรรมประยุกต์สิรินธร",
                     created_by=2,
                     updated_by=2,
                     created_at=now,
@@ -234,6 +245,7 @@ async def init_demo_events():
                     capacity=120,
                     is_active=True,
                     image_url="https://images.unsplash.com/photo-1557804506-669a67965ba0?q=80&w=1074&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+                    location="อาคารเรียนและปฏิบัติการพื้นฐานทางวิทยาศาสตร์",
                     created_by=1,
                     updated_by=1,
                     created_at=now,
@@ -247,6 +259,7 @@ async def init_demo_events():
                     capacity=250,
                     is_active=True,
                     image_url="https://images.unsplash.com/photo-1527979809431-ea3d5c0c01c9?q=80&w=1209&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+                    location="อาคารวิจัยวิศวกรรมประยุกต์สิรินธร",
                     created_by=3,
                     updated_by=3,
                     created_at=now,
@@ -260,6 +273,7 @@ async def init_demo_events():
                     capacity=60,
                     is_active=True,
                     image_url="https://plus.unsplash.com/premium_photo-1666739032615-ecbd14dfb543?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+                    location="อาคารเรียนและปฏิบัติการพื้นฐานทางวิทยาศาสตร์",
                     created_by=2,
                     updated_by=2,
                     created_at=now,
@@ -273,6 +287,7 @@ async def init_demo_events():
                     capacity=350,
                     is_active=True,
                     image_url="https://images.unsplash.com/photo-1493528237448-144452699e16?q=80&w=1303&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+                    location="อาคารวิจัยวิศวกรรมประยุกต์สิรินธร",
                     created_by=1,
                     updated_by=1,
                     created_at=now,
