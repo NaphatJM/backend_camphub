@@ -21,7 +21,7 @@ class EnrollmentService:
 
     # 1. ดูผู้เรียนของ course
     async def get_course_enrollments(self, course_id: int) -> EnrollmentSummary:
-        result = await self.session.execute(
+        result = await self.session.exec(
             select(Enrollment)
             .options(selectinload(Enrollment.user))
             .where(Enrollment.course_id == course_id)
@@ -50,8 +50,13 @@ class EnrollmentService:
 
     # 2. Enroll current user
     async def enroll(self, data: EnrollmentCreate) -> EnrollmentRead:
+        # ตรวจสอบว่า course มีอยู่จริงหรือไม่
+        course = await self.session.get(Course, data.course_id)
+        if not course:
+            raise HTTPException(status_code=404, detail="Course not found")
+
         # ตรวจสอบว่าผู้ใช้ enroll แล้วหรือยัง
-        result = await self.session.execute(
+        result = await self.session.exec(
             select(Enrollment).where(
                 Enrollment.course_id == data.course_id,
                 Enrollment.user_id == self.current_user.id,
@@ -88,7 +93,7 @@ class EnrollmentService:
 
     # 3. ยกเลิก enrollment
     async def cancel(self, course_id: int) -> dict:
-        result = await self.session.execute(
+        result = await self.session.exec(
             select(Enrollment).where(
                 Enrollment.course_id == course_id,
                 Enrollment.user_id == self.current_user.id,
@@ -104,7 +109,7 @@ class EnrollmentService:
     # 4. ดูข้อมูล enrollment ของ user ปัจจุบัน
     async def get_user_enrollments(self) -> list[EnrollmentReadWithSchedule]:
         # Load enrollment + course + schedule + room + location
-        result = await self.session.execute(
+        result = await self.session.exec(
             select(Enrollment)
             .options(
                 selectinload(Enrollment.course)

@@ -185,6 +185,99 @@ async def init_demo_events():
                     created_at=now,
                     updated_at=now,
                 ),
+                Event(
+                    title="Tech Meetup 2025",
+                    description="พบกับงาน Meetup สำหรับสายเทคโนโลยีและนวัตกรรม อัปเดตเทรนด์ใหม่ ๆ และ networking กับเพื่อน ๆ ในวงการ",
+                    start_date=now + timedelta(days=30),
+                    end_date=now + timedelta(days=30, hours=4),
+                    capacity=300,
+                    is_active=True,
+                    image_url="https://images.unsplash.com/photo-1519389950473-47ba0277781c?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+                    created_by=2,
+                    updated_by=2,
+                    created_at=now,
+                    updated_at=now,
+                ),
+                Event(
+                    title="อบรมการเขียนโปรแกรม Python เบื้องต้น",
+                    description="Workshop สำหรับผู้เริ่มต้น Python สอนโดยอาจารย์ผู้เชี่ยวชาญ พร้อมใบประกาศนียบัตร",
+                    start_date=now + timedelta(days=40),
+                    end_date=now + timedelta(days=40, hours=6),
+                    capacity=80,
+                    is_active=True,
+                    image_url="https://images.unsplash.com/photo-1660616246653-e2c57d1077b9?q=80&w=1331&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+                    created_by=1,
+                    updated_by=1,
+                    created_at=now,
+                    updated_at=now,
+                ),
+            ]
+            events += [
+                Event(
+                    title="Open House 2025",
+                    description="กิจกรรม Open House สำหรับนักเรียนมัธยมปลายและผู้ปกครอง เยี่ยมชมคณะและพบกับรุ่นพี่",
+                    start_date=now + timedelta(days=45),
+                    end_date=now + timedelta(days=45, hours=8),
+                    capacity=400,
+                    is_active=True,
+                    image_url="https://images.unsplash.com/photo-1606761568499-6d2451b23c66?q=80&w=1074&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+                    created_by=2,
+                    updated_by=2,
+                    created_at=now,
+                    updated_at=now,
+                ),
+                Event(
+                    title="ประกวด Startup Idea",
+                    description="ขอเชิญชวนนักศึกษาส่งไอเดียธุรกิจ Startup ชิงเงินรางวัลและโอกาสเข้าร่วมโครงการบ่มเพาะ",
+                    start_date=now + timedelta(days=50),
+                    end_date=now + timedelta(days=50, hours=5),
+                    capacity=120,
+                    is_active=True,
+                    image_url="https://images.unsplash.com/photo-1557804506-669a67965ba0?q=80&w=1074&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+                    created_by=1,
+                    updated_by=1,
+                    created_at=now,
+                    updated_at=now,
+                ),
+                Event(
+                    title="กิจกรรม Movie Night",
+                    description="Movie Night ชวนเพื่อน ๆ มาดูหนังกลางแปลงที่สนามหญ้าใหญ่ ฟรีป๊อปคอร์น!",
+                    start_date=now + timedelta(days=55),
+                    end_date=now + timedelta(days=55, hours=3),
+                    capacity=250,
+                    is_active=True,
+                    image_url="https://images.unsplash.com/photo-1527979809431-ea3d5c0c01c9?q=80&w=1209&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+                    created_by=3,
+                    updated_by=3,
+                    created_at=now,
+                    updated_at=now,
+                ),
+                Event(
+                    title="กิจกรรม English Camp",
+                    description="English Camp สำหรับนักศึกษาที่ต้องการฝึกภาษาอังกฤษกับเจ้าของภาษา 2 วัน 1 คืน",
+                    start_date=now + timedelta(days=60),
+                    end_date=now + timedelta(days=61),
+                    capacity=60,
+                    is_active=True,
+                    image_url="https://plus.unsplash.com/premium_photo-1666739032615-ecbd14dfb543?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+                    created_by=2,
+                    updated_by=2,
+                    created_at=now,
+                    updated_at=now,
+                ),
+                Event(
+                    title="กิจกรรม Science Fair",
+                    description="Science Fair งานแสดงผลงานวิจัยและนวัตกรรมของนักศึกษาและอาจารย์",
+                    start_date=now + timedelta(days=70),
+                    end_date=now + timedelta(days=71),
+                    capacity=350,
+                    is_active=True,
+                    image_url="https://images.unsplash.com/photo-1493528237448-144452699e16?q=80&w=1303&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+                    created_by=1,
+                    updated_by=1,
+                    created_at=now,
+                    updated_at=now,
+                ),
             ]
             session.add_all(events)
             await session.commit()
@@ -203,7 +296,6 @@ async def init_demo_announcements():
 
             now = datetime.now()
 
-            # Import AnnouncementCategory at the top level
             from app.models.announcement_model import AnnouncementCategory
 
             announcements = [
@@ -235,6 +327,88 @@ async def init_demo_announcements():
                     image_url="https://images.unsplash.com/photo-1508169351866-777fc0047ac5?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
                     start_date=now + timedelta(days=7),
                     end_date=now + timedelta(days=21),
+                    created_by=3,
+                ),
+                Announcement(
+                    title="ประกาศปิดปรับปรุงระบบ",
+                    content="ระบบจะปิดปรับปรุงในวันที่ 10 ตุลาคม เวลา 22:00-02:00",
+                    description="เพื่อพัฒนาระบบให้ดียิ่งขึ้น จะมีการปิดปรับปรุงชั่วคราวในช่วงเวลาดังกล่าว ขออภัยในความไม่สะดวก",
+                    category=AnnouncementCategory.GENERAL,
+                    image_url="https://plus.unsplash.com/premium_photo-1721830791498-ec809d9d94ec?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+                    start_date=now + timedelta(days=5),
+                    end_date=now + timedelta(days=6),
+                    created_by=1,
+                ),
+                Announcement(
+                    title="Academic Conference 2025",
+                    content="ขอเชิญชวนเข้าร่วมงานประชุมวิชาการประจำปี 2025",
+                    description="งานประชุมวิชาการระดับนานาชาติสำหรับนักศึกษาและอาจารย์ พบกับวิทยากรรับเชิญจากต่างประเทศ",
+                    category=AnnouncementCategory.ACADEMIC,
+                    image_url="https://images.unsplash.com/photo-1587825140708-dfaf72ae4b04?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+                    start_date=now + timedelta(days=20),
+                    end_date=now + timedelta(days=22),
+                    created_by=2,
+                ),
+                Announcement(
+                    title="กิจกรรม Big Cleaning Day",
+                    content="ขอเชิญนักศึกษาทุกคนร่วมกิจกรรม Big Cleaning Day",
+                    description="ร่วมกันทำความสะอาดพื้นที่มหาวิทยาลัยเพื่อสิ่งแวดล้อมที่ดีขึ้น พบกันวันศุกร์นี้ที่ลานกิจกรรม",
+                    category=AnnouncementCategory.ACTIVITY,
+                    image_url="https://plus.unsplash.com/premium_photo-1683141120496-f5921a97f5c4?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+                    start_date=now + timedelta(days=3),
+                    end_date=now + timedelta(days=4),
+                    created_by=3,
+                ),
+            ]
+            announcements += [
+                Announcement(
+                    title="แจ้งเตือนการชำระค่าธรรมเนียมการศึกษา",
+                    content="โปรดชำระค่าธรรมเนียมการศึกษาภายในวันที่กำหนด เพื่อหลีกเลี่ยงค่าปรับ",
+                    description="นักศึกษาทุกคนต้องชำระค่าธรรมเนียมการศึกษาภายในวันที่ 15 ตุลาคม 2025",
+                    category=AnnouncementCategory.GENERAL,
+                    image_url="https://images.unsplash.com/photo-1625980344922-a4df108b2bd0?q=80&w=1175&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+                    start_date=now + timedelta(days=8),
+                    end_date=now + timedelta(days=15),
+                    created_by=1,
+                ),
+                Announcement(
+                    title="ประกาศผลสอบกลางภาค",
+                    content="สามารถตรวจสอบผลสอบกลางภาคได้ที่ระบบ Student Portal",
+                    description="ผลสอบกลางภาคของทุกวิชาถูกอัปโหลดเรียบร้อยแล้วที่ Student Portal",
+                    category=AnnouncementCategory.ACADEMIC,
+                    image_url="https://images.unsplash.com/photo-1606326608690-4e0281b1e588?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+                    start_date=now + timedelta(days=12),
+                    end_date=now + timedelta(days=20),
+                    created_by=2,
+                ),
+                Announcement(
+                    title="กิจกรรมรับน้องใหม่ Freshy Day",
+                    content="ขอเชิญชวนน้องใหม่เข้าร่วมกิจกรรมรับน้อง Freshy Day พบกับกิจกรรมสนุก ๆ และของรางวัลมากมาย",
+                    description="กิจกรรมรับน้องใหม่ประจำปี 2025 จัดขึ้นที่สนามกีฬาใหญ่",
+                    category=AnnouncementCategory.ACTIVITY,
+                    image_url="https://images.unsplash.com/photo-1540539234-c14a20fb7c7b?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+                    start_date=now + timedelta(days=18),
+                    end_date=now + timedelta(days=19),
+                    created_by=3,
+                ),
+                Announcement(
+                    title="แจ้งเตือนการลงทะเบียนเรียนซ้ำซ้อน",
+                    content="ตรวจสอบตารางเรียนของคุณเพื่อหลีกเลี่ยงการลงทะเบียนเรียนซ้ำซ้อน",
+                    description="ระบบตรวจพบการลงทะเบียนเรียนซ้ำซ้อนในบางรายวิชา กรุณาตรวจสอบและแก้ไขก่อนวันปิดรับลงทะเบียน",
+                    category=AnnouncementCategory.ACADEMIC,
+                    image_url="https://plus.unsplash.com/premium_photo-1682310105362-76fa03431d65?q=80&w=1212&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+                    start_date=now + timedelta(days=9),
+                    end_date=now + timedelta(days=12),
+                    created_by=2,
+                ),
+                Announcement(
+                    title="กิจกรรม Volunteer Day",
+                    content="Volunteer Day ชวนเพื่อน ๆ มาร่วมทำกิจกรรมจิตอาสาเพื่อสังคม",
+                    description="กิจกรรมจิตอาสาเพื่อสังคม จัดขึ้นที่ลานกิจกรรมกลางแจ้ง",
+                    category=AnnouncementCategory.ACTIVITY,
+                    image_url="https://plus.unsplash.com/premium_photo-1683121334505-907a00cf904c?q=80&w=1332&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+                    start_date=now + timedelta(days=25),
+                    end_date=now + timedelta(days=26),
                     created_by=3,
                 ),
             ]
@@ -299,7 +473,8 @@ async def init_locations_and_rooms():
 # ---------------------------
 async def init_demo_courses():
     async with AsyncSession(async_engine) as session:
-        if (await session.execute(select(Course))).scalars().first():
+        result = await session.execute(select(Course))
+        if result.scalars().first():
             print("Courses already exist")
             return
 

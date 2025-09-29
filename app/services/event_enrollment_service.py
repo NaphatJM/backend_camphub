@@ -20,7 +20,7 @@ class EventEnrollmentService:
 
     async def _get_enrollment_count(self, event_id: int) -> int:
         """ฟังก์ชันกลางสำหรับนับจำนวนคนที่สมัครในกิจกรรม"""
-        result = await self.session.execute(
+        result = await self.session.exec(
             select(func.count(EventEnrollment.id)).where(
                 EventEnrollment.event_id == event_id
             )
@@ -34,7 +34,7 @@ class EventEnrollmentService:
         if not event_ids:
             return {}
 
-        result = await self.session.execute(
+        result = await self.session.exec(
             select(
                 EventEnrollment.event_id, func.count(EventEnrollment.id).label("count")
             )
@@ -46,7 +46,7 @@ class EventEnrollmentService:
 
     async def get_event_enrollments(self, event_id: int) -> EventEnrollmentSummary:
         # ดึงรายชื่อคนที่สมัคร
-        result = await self.session.execute(
+        result = await self.session.exec(
             select(EventEnrollment)
             .options(selectinload(EventEnrollment.user))
             .where(EventEnrollment.event_id == event_id)
@@ -72,7 +72,7 @@ class EventEnrollmentService:
             raise HTTPException(status_code=400, detail="กิจกรรมนี้ปิดรับสมัครแล้ว")
 
         # ตรวจสอบว่าเคยสมัครแล้วหรือยัง
-        existing_enrollment = await self.session.execute(
+        existing_enrollment = await self.session.exec(
             select(EventEnrollment).where(
                 EventEnrollment.event_id == data.event_id,
                 EventEnrollment.user_id == self.current_user.id,
@@ -113,7 +113,7 @@ class EventEnrollmentService:
         )
 
     async def cancel(self, event_id: int) -> dict:
-        result = await self.session.execute(
+        result = await self.session.exec(
             select(EventEnrollment).where(
                 EventEnrollment.event_id == event_id,
                 EventEnrollment.user_id == self.current_user.id,
@@ -127,7 +127,7 @@ class EventEnrollmentService:
         return {"ok": True}
 
     async def get_user_event_enrollments(self) -> list[EventEnrollmentRead]:
-        result = await self.session.execute(
+        result = await self.session.exec(
             select(EventEnrollment)
             .options(selectinload(EventEnrollment.event))
             .where(EventEnrollment.user_id == self.current_user.id)
@@ -180,7 +180,7 @@ class EventEnrollmentService:
     async def get_events_with_capacity_status(self) -> list[dict]:
         """ดึงรายการ events พร้อมข้อมูล capacity"""
         # ดึงทุก events ที่เปิดใช้งาน
-        events_result = await self.session.execute(
+        events_result = await self.session.exec(
             select(Event).where(Event.is_active == True)
         )
         events = events_result.scalars().all()
@@ -197,7 +197,7 @@ class EventEnrollmentService:
         cls, session: AsyncSession, event_id: int
     ) -> int:
         """Static method สำหรับใช้ใน routes โดยไม่ต้องสร้าง service instance"""
-        result = await session.execute(
+        result = await session.exec(
             select(func.count(EventEnrollment.id)).where(
                 EventEnrollment.event_id == event_id
             )
@@ -212,7 +212,7 @@ class EventEnrollmentService:
         if not event_ids:
             return {}
 
-        result = await session.execute(
+        result = await session.exec(
             select(
                 EventEnrollment.event_id, func.count(EventEnrollment.id).label("count")
             )

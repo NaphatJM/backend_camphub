@@ -24,7 +24,7 @@ async def get_user_bookmarks(
     """ดู bookmark ทั้งหมดของผู้ใช้ปัจจุบัน"""
 
     # นับจำนวน bookmark ทั้งหมด
-    total_count_result = await session.execute(
+    total_count_result = await session.exec(
         select(func.count(AnnouncementBookmark.id)).where(
             AnnouncementBookmark.user_id == current_user.id
         )
@@ -35,7 +35,7 @@ async def get_user_bookmarks(
     offset = (page - 1) * per_page
 
     # ดึงข้อมูล bookmarks พร้อม announcement (ใช้ eager loading)
-    bookmarks_result = await session.execute(
+    bookmarks_result = await session.exec(
         select(AnnouncementBookmark)
         .options(selectinload(AnnouncementBookmark.announcement))
         .where(AnnouncementBookmark.user_id == current_user.id)
@@ -119,7 +119,7 @@ async def create_bookmark(
         await session.refresh(new_bookmark)
 
         # ดึงข้อมูล bookmark พร้อม announcement (ใช้ eager loading)
-        bookmark_with_announcement = await session.execute(
+        bookmark_with_announcement = await session.exec(
             select(AnnouncementBookmark)
             .options(selectinload(AnnouncementBookmark.announcement))
             .where(AnnouncementBookmark.id == new_bookmark.id)
@@ -154,7 +154,7 @@ async def delete_bookmark(
     """ลบ bookmark สำหรับ announcement"""
 
     # ค้นหา bookmark ที่ต้องการลบ
-    bookmark_result = await session.execute(
+    bookmark_result = await session.exec(
         select(AnnouncementBookmark).where(
             and_(
                 AnnouncementBookmark.user_id == current_user.id,
@@ -181,7 +181,7 @@ async def check_bookmark_status(
 ):
     """ตรวจสอบสถานะ bookmark ของ announcement"""
 
-    bookmark_result = await session.execute(
+    bookmark_result = await session.exec(
         select(AnnouncementBookmark).where(
             and_(
                 AnnouncementBookmark.user_id == current_user.id,
