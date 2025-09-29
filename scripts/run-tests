@@ -1,0 +1,11 @@
+#!/bin/bash
+# Run all tests with pytest and show coverage
+
+echo "🚀 Running CampHub API Tests..."
+echo "================================"
+
+# Activate virtual environment and run tests with coverage
+source .venv/Scripts/activate && python -m pytest tests/ --cov=app --cov-report=html --cov-report=term -v
+
+echo "================================"
+echo "✅ Test execution completed!"

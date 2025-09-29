@@ -10,6 +10,6 @@ router = APIRouter(prefix="/faculty", tags=["faculty"])
 
 @router.get("", response_model=list[FacultyRead])
 async def get_all_faculties(session: AsyncSession = Depends(get_session)):
-    result = await session.execute(select(Faculty))
+    result = await session.exec(select(Faculty))
     faculties = result.scalars().all()
     return faculties

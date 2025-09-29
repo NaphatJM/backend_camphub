@@ -26,7 +26,7 @@ async def upload_profile_image(
         )
 
         # Get fresh user object from database
-        result = await session.execute(select(User).where(User.id == current_user.id))
+        result = await session.exec(select(User).where(User.id == current_user.id))
         user = result.scalars().first()
 
         if not user:
@@ -73,7 +73,7 @@ async def get_me(current: User = Depends(get_current_user)):
 
 @router.get("/{user_id}", response_model=MeRead)
 async def get_user_by_id(user_id: int, session: AsyncSession = Depends(get_session)):
-    result = await session.execute(
+    result = await session.exec(
         select(User)
         .options(joinedload(User.role), joinedload(User.faculty))
         .where(User.id == user_id)
@@ -109,7 +109,7 @@ async def update_me(
 ):
     # Check username uniqueness
     if payload.username and payload.username != current.username:
-        username_result = await session.execute(
+        username_result = await session.exec(
             select(User).where(User.username == payload.username)
         )
         if username_result.scalar_one_or_none():
@@ -118,7 +118,7 @@ async def update_me(
 
     # Check email uniqueness
     if payload.email and payload.email != current.email:
-        email_result = await session.execute(
+        email_result = await session.exec(
             select(User).where(User.email == payload.email)
         )
         if email_result.scalar_one_or_none():

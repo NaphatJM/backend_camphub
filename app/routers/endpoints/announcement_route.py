@@ -57,13 +57,13 @@ async def get_announcements(
     if category:
         count_stmt = count_stmt.where(Announcement.category == category)
 
-    count_result = await session.execute(count_stmt)
+    count_result = await session.exec(count_stmt)
     total = len(count_result.scalars().all())
 
     offset = (page - 1) * per_page
     stmt = stmt.offset(offset).limit(per_page).order_by(Announcement.created_at.desc())
 
-    result = await session.execute(stmt)
+    result = await session.exec(stmt)
     announcements = result.scalars().all()
 
     total_pages = math.ceil(total / per_page) if total > 0 else 1
@@ -106,14 +106,14 @@ async def get_announcements_by_category(
     )
 
     # Count total
-    count_result = await session.execute(stmt)
+    count_result = await session.exec(stmt)
     total = len(count_result.scalars().all())
 
     # Apply pagination
     offset = (page - 1) * per_page
     stmt = stmt.offset(offset).limit(per_page).order_by(Announcement.created_at.desc())
 
-    result = await session.execute(stmt)
+    result = await session.exec(stmt)
     announcements = result.scalars().all()
 
     total_pages = math.ceil(total / per_page) if total > 0 else 1
@@ -148,6 +148,9 @@ async def create_announcement(
     current_user: User = Depends(get_current_user),
     session: AsyncSession = Depends(get_session),
 ):
+    # เช็ค role: เฉพาะ Teacher/Admin เท่านั้น
+    if getattr(current_user, "role_id", None) == 2:
+        raise HTTPException(status_code=403, detail="นักศึกษาไม่มีสิทธิ์สร้างข่าวประกาศ")
 
     # Convert timezone-aware datetime to naive datetime for database
     start_date = make_naive_datetime(start_date)
@@ -162,6 +165,13 @@ async def create_announcement(
     # Handle image upload if provided
     image_url = None
     if image:
+        # ===== ตรวจสอบขนาดไฟล์ (สูงสุด 10MB) =====
+        MAX_SIZE = 10 * 1024 * 1024  # 10MB
+        contents = await image.read()
+        if len(contents) > MAX_SIZE:
+            raise HTTPException(status_code=413, detail="ไฟล์รูปภาพใหญ่เกิน 10MB")
+        # reset file pointer for downstream
+        image.file.seek(0)
         image_url, _ = await announcement_image_service.save_image(
             image, "announcement"
         )
@@ -245,7 +255,50 @@ async def update_announcement(
     return announcement
 
 
-@router.delete("/{announcement_id}")
+@router.patch("/{announcement_id}", response_model=AnnouncementRead)
+async def patch_announcement(
+    announcement_id: int,
+    announcement_update: AnnouncementUpdate,
+    session: AsyncSession = Depends(get_session),
+    current_user: User = Depends(get_current_user),
+):
+    announcement = await session.get(Announcement, announcement_id)
+    if not announcement:
+        raise HTTPException(status_code=404, detail="ไม่พบข่าวประกาศ")
+    if announcement.created_by != current_user.id:
+        raise HTTPException(status_code=403, detail="คุณไม่มีสิทธิ์แก้ไขข่าวประกาศนี้")
+    update_data = announcement_update.model_dump(exclude_unset=True)
+    if "start_date" in update_data:
+        update_data["start_date"] = make_naive_datetime(update_data["start_date"])
+    if "end_date" in update_data:
+        update_data["end_date"] = make_naive_datetime(update_data["end_date"])
+    if "start_date" in update_data or "end_date" in update_data:
+        try:
+            validate_datetime_range(
+                update_data.get("start_date", announcement.start_date),
+                update_data.get("end_date", announcement.end_date),
+            )
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e))
+    if update_data:
+        for field, value in update_data.items():
+            setattr(announcement, field, value)
+        announcement.updated_at = datetime.now()
+        try:
+            await session.commit()
+            await session.refresh(announcement)
+        except IntegrityError as e:
+            await session.rollback()
+            raise HTTPException(status_code=500, detail="เกิดข้อผิดพลาดในการอัปเดตข้อมูล")
+        except Exception as e:
+            await session.rollback()
+            raise HTTPException(
+                status_code=500, detail=f"เกิดข้อผิดพลาดในการอัปเดตข่าวประกาศ: {str(e)}"
+            )
+    return announcement
+
+
+@router.delete("/{announcement_id}", status_code=204, response_model=None)
 async def delete_announcement(
     announcement_id: int,
     session: AsyncSession = Depends(get_session),
@@ -254,19 +307,14 @@ async def delete_announcement(
     announcement = await session.get(Announcement, announcement_id)
     if not announcement:
         raise HTTPException(status_code=404, detail="ไม่พบข่าวประกาศ")
-
-    # ตรวจสอบ ownership
     if announcement.created_by != current_user.id:
         raise HTTPException(status_code=403, detail="คุณไม่มีสิทธิ์ลบข่าวประกาศนี้")
-
-    # Delete associated image if exists
     if announcement.image_url:
         announcement_image_service.delete_image(announcement.image_url)
-
     try:
         await session.delete(announcement)
         await session.commit()
-        return {"message": "ลบข่าวประกาศเรียบร้อยแล้ว"}
+        return  # 204 No Content
     except IntegrityError as e:
         await session.rollback()
         raise HTTPException(

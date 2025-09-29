@@ -290,7 +290,8 @@ async def init_locations_and_rooms():
 # ---------------------------
 async def init_demo_courses():
     async with AsyncSession(async_engine) as session:
-        if (await session.execute(select(Course))).scalars().first():
+        result = await session.execute(select(Course))
+        if result.scalars().first():
             print("Courses already exist")
             return
 

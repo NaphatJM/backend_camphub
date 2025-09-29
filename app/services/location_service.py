@@ -16,7 +16,7 @@ class LocationService:
     # GET all locations
     # --------------------------
     async def get_all(self) -> List[LocationRead]:
-        result = await self.session.execute(select(Location))
+        result = await self.session.exec(select(Location))
         locations = result.scalars().all()
         return [LocationRead.model_validate(loc) for loc in locations]
 
