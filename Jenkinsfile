@@ -51,7 +51,7 @@ pipeline {
             steps {
                 script {
                     withSonarQubeEnv('SonarQubeServer') {
-                        docker.image('sonarsource/sonar-scanner-cli').inside("-v ${env.WORKSPACE}:${env.WORKSPACE}") {
+                        docker.image('sonarsource/sonar-scanner-cli').inside {
                           sh '''
                               sonar-scanner \
                                   -Dsonar.projectKey=backend_camphub \
