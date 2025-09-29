@@ -45,7 +45,7 @@ pipeline {
                 sh 'export PATH="$HOME/.local/bin:$PATH" && /root/.local/bin/poetry run coverage xml -o coverage.xml'
             }
         }
-        
+
         stage('SonarQube Analysis') {
             steps {
                 script {
@@ -58,7 +58,7 @@ pipeline {
                                     -Dsonar.sources=app \
                                     -Dsonar.tests=tests \
                                     -Dsonar.host.url=http://host.docker.internal:9001 \
-                                    -Dsonar.token=${SONAR_TOKEN} \
+                                    -Dsonar.token=${SONARQUBE} \
                                     -Dsonar.exclusions=**/tests/**,**/*.md,**/app/core/** \
                                     -Dsonar.python.ignoreHeaderComments=true \
                                     -Dsonar.python.coverage.reportPaths=${env.WORKSPACE}/coverage.xml \
