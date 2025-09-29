@@ -56,7 +56,6 @@ pipeline {
                                 sonar-scanner \
                                     -Dsonar.projectKey=backend_camphub \
                                     -Dsonar.sources=app \
-                                    -Dsonar.tests=tests \
                                     -Dsonar.host.url=http://host.docker.internal:9001 \
                                     -Dsonar.token=${SONARQUBE} \
                                     -Dsonar.exclusions=**/tests/**,**/*.md,**/app/core/** \
