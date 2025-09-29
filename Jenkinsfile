@@ -1,6 +1,9 @@
 pipeline {
     agent any  // ใช้ Jenkins node ที่มี Docker CLI
-    workspace '/var/jenkins_home/workspace/backend_camphub' // กำหนด workspace ให้ชัดเจน
+    options {
+        // กำหนด workspace ให้ชัดเจน
+        customWorkspace '/var/jenkins_home/workspace/backend_camphub'
+    }
 
     environment {
         SONARQUBE = credentials('sonar-token')   // Jenkins Credentials สำหรับ SonarQube token
