@@ -88,9 +88,20 @@ pipeline {
             agent any
             steps {
                 sh '''
+                # Start DB & pgadmin
+                docker-compose down || true
+                docker-compose up -d
+
+                # รอ DB พร้อม (optional)
+                for i in {1..10}; do
+                  docker exec camphub_db pg_isready && break
+                  sleep 2
+                done
+
                 docker stop backend_camphub || true
                 docker rm backend_camphub || true
                 docker run -d \
+                        --network backend_camphub_default \
                         -e SQLDB_URL=$SQLDB_URL \
                         -e SECRET_KEY=$SECRET_KEY \
                         -e JWT_SECRET_KEY=$JWT_SECRET_KEY \
