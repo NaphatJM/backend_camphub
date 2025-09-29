@@ -6,6 +6,11 @@ pipeline {
         SQLDB_URL = credentials('SQLDB_URL')       // Jenkins credentials ID
         SECRET_KEY = credentials('SECRET_KEY')
         JWT_SECRET_KEY = credentials('JWT_SECRET_KEY')
+        POSTGRES_USER = credentials('POSTGRES_USER')
+        POSTGRES_PASSWORD = credentials('POSTGRES_PASSWORD')
+        POSTGRES_DB = credentials('POSTGRES_DB')
+        PGADMIN_EMAIL = credentials('PGADMIN_EMAIL')
+        PGADMIN_PASSWORD = credentials('PGADMIN_PASSWORD')
     }
 
     stages {
