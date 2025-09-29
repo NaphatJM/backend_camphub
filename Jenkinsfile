@@ -50,8 +50,8 @@ pipeline {
             steps {
                 script {
                     withSonarQubeEnv('SonarQubeServer') {
-                        docker.image('sonarsource/sonar-scanner-cli').inside("-v ${env.WORKSPACE}:${env.WORKSPACE} -w ${env.WORKSPACE}") {
-                          sh """
+                        docker.image('sonarsource/sonar-scanner-cli').inside("-v /var/jenkins_home/workspace/backend_camphub@2:/workspace -w /workspace") {
+                          sh '''
                               sonar-scanner \
                                   -Dsonar.projectKey=backend_camphub \
                                   -Dsonar.sources=app \
@@ -59,8 +59,8 @@ pipeline {
                                   -Dsonar.login=${SONARQUBE} \
                                   -Dsonar.exclusions=**/tests/**,**/*.md \
                                   -Dsonar.python.ignoreHeaderComments=true \
-                                  -Dsonar.python.coverage.reportPaths=${env.WORKSPACE}/coverage.xml
-                          """
+                                  -Dsonar.python.coverage.reportPaths=coverage.xml
+                          '''
                         }
                     }
                 }
