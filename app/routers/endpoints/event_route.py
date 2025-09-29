@@ -31,6 +31,8 @@ from app.utils import make_naive_datetime, validate_datetime_range
 
 router = APIRouter(prefix="/events", tags=["events"])
 
+NOT_FOUND_EVENT_MSG = "ไม่พบกิจกรรมนี้"
+
 
 @router.post("/", response_model=EventResponse, status_code=status.HTTP_201_CREATED)
 async def create_event(
@@ -232,7 +234,9 @@ async def open_event_in_app(event_id: int):
 async def get_event_by_id(event_id: int, session: AsyncSession = Depends(get_session)):
     event = await session.get(Event, event_id)
     if not event:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="ไม่พบกิจกรรมนี้")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail=NOT_FOUND_EVENT_MSG
+        )
 
     # Get enrolled_count ใช้ฟังก์ชันกลาง
     from app.services.event_enrollment_service import EventEnrollmentService
@@ -272,7 +276,9 @@ async def update_event(
 ):
     event = await session.get(Event, event_id)
     if not event:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="ไม่พบกิจกรรมนี้")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail=NOT_FOUND_EVENT_MSG
+        )
 
     if event.created_by != current_user.id:
         raise HTTPException(
@@ -334,7 +340,9 @@ async def delete_event(
 ):
     event = await session.get(Event, event_id)
     if not event:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="ไม่พบกิจกรรมนี้")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail=NOT_FOUND_EVENT_MSG
+        )
 
     if event.created_by != current_user.id:
         raise HTTPException(
