@@ -51,7 +51,7 @@ pipeline {
                 script {
                     withSonarQubeEnv('SonarQubeServer') {
                         docker.image('sonarsource/sonar-scanner-cli').inside("-v ${env.WORKSPACE}:${env.WORKSPACE} -w ${env.WORKSPACE}") {
-                          sh '''
+                          sh """
                               sonar-scanner \
                                   -Dsonar.projectKey=backend_camphub \
                                   -Dsonar.sources=app \
@@ -60,7 +60,7 @@ pipeline {
                                   -Dsonar.exclusions=**/tests/**,**/*.md \
                                   -Dsonar.python.ignoreHeaderComments=true \
                                   -Dsonar.python.coverage.reportPaths=${env.WORKSPACE}/coverage.xml
-                          '''
+                          """
                         }
                     }
                 }
