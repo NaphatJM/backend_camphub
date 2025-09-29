@@ -80,7 +80,7 @@ async def signup(payload: SignUpRequest, session: AsyncSession = Depends(get_ses
 
 @router.post("/signin", response_model=Token)
 async def signin(creds: LoginRequest, session: AsyncSession = Depends(get_session)):
-    result = await session.exec(select(User).where(User.email == creds.email))
+    result = await session.execute(select(User).where(User.email == creds.email))
     user = result.scalar_one_or_none()
     if not user or not verify_password(creds.password, user.hashed_password):
         raise HTTPException(
