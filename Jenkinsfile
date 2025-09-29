@@ -59,7 +59,7 @@ pipeline {
                                   -Dsonar.host.url=http://host.docker.internal:9001 \
                                   -Dsonar.login=${SONARQUBE} \
                                   -Dsonar.exclusions=**/tests/**,**/*.md,**/app/core/** \
-                                  -Dsonar.python.ignoreHeaderComments=true
+                                  -Dsonar.python.ignoreHeaderComments=true \
                                   -Dsonar.python.coverage.reportPaths=coverage.xml
                           '''
                         }
