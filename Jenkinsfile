@@ -56,7 +56,7 @@ pipeline {
                                   -Dsonar.projectKey=backend_camphub \
                                   -Dsonar.sources=app \
                                   -Dsonar.host.url=http://host.docker.internal:9001 \
-                                  -Dsonar.login=${SONARQUBE} \
+                                  -Dsonar.token=${SONARQUBE} \
                                   -Dsonar.exclusions=**/tests/**,**/*.md \
                                   -Dsonar.python.ignoreHeaderComments=true \
                                   -Dsonar.python.coverage.reportPaths=coverage.xml
