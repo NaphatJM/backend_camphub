@@ -11,6 +11,7 @@ import asyncio
 import json
 from jose import jwt
 from app.core.config import settings
+from sqlalchemy import select
 
 
 @pytest_asyncio.fixture
@@ -557,3 +558,145 @@ async def test_create_announcement_with_invalid_jwt(client):
     }
     response = await client.post("/api/annc/", data=data, headers=headers)
     assert response.status_code in (401, 403)
+
+
+@pytest.mark.asyncio
+async def test_get_announcements_empty(client: AsyncClient, session, setup_base_data):
+    # สร้างประกาศที่เป็น past และ future เท่านั้น -> ไม่มี active
+
+    # สร้าง user (professor) และประกาศ past/future
+    signup = {
+        "username": "temp_prof",
+        "email": "temp_prof@example.com",
+        "password": "pass1234",
+        "first_name": "Temp",
+        "last_name": "Prof",
+        "birth_date": "1990-01-01",
+        "faculty_id": 1,
+        "year_of_study": 1,
+        "role_id": 1,
+    }
+    resp = await client.post("/api/auth/signup", json=signup)
+    token = resp.json()["access_token"]
+    headers = {"Authorization": f"Bearer {token}"}
+
+    # หาผู้ใช้จาก session
+    result = await session.exec(select(User).where(User.username == "temp_prof"))
+    user = result.scalar_one()
+
+    now = datetime.now()
+    past = Announcement(
+        title="past",
+        description="past",
+        category=AnnouncementCategory.GENERAL,
+        start_date=now - timedelta(days=10),
+        end_date=now - timedelta(days=5),
+        created_by=user.id,
+    )
+    future = Announcement(
+        title="future",
+        description="future",
+        category=AnnouncementCategory.GENERAL,
+        start_date=now + timedelta(days=5),
+        end_date=now + timedelta(days=10),
+        created_by=user.id,
+    )
+    session.add_all([past, future])
+    await session.commit()
+
+    r = await client.get("/api/annc/")
+    assert r.status_code == 200
+    data = r.json()
+    assert data["total"] == 0
+    assert data["announcements"] == []
+    assert data["total_pages"] == 1
+
+
+@pytest.mark.asyncio
+async def test_put_announcement_success(client: AsyncClient, authenticated_user):
+    headers = authenticated_user["headers"]
+    now = datetime.now()
+    # สร้างประกาศ
+    create = {
+        "title": "For PUT",
+        "description": "desc",
+        "category": "กิจกรรม",
+        "start_date": now.isoformat(),
+        "end_date": (now + timedelta(days=2)).isoformat(),
+    }
+    c = await client.post("/api/annc/", data=create, headers=headers)
+    assert c.status_code == 201
+    ann_id = c.json()["id"]
+
+    # PUT แบบเต็ม
+    put_payload = {
+        "title": "PUT Updated",
+        "description": "new desc",
+        "category": "กิจกรรม",
+        "start_date": now.isoformat(),
+        "end_date": (now + timedelta(days=5)).isoformat(),
+    }
+    res = await client.put(f"/api/annc/{ann_id}", json=put_payload, headers=headers)
+    assert res.status_code == 200
+    assert res.json()["title"] == "PUT Updated"
+    assert res.json()["description"] == "new desc"
+
+
+@pytest.mark.asyncio
+async def test_forbidden_when_other_user_attempts_modify(
+    client: AsyncClient, authenticated_user
+):
+    # สร้างประกาศด้วยผู้ใช้แรก
+    headers1 = authenticated_user["headers"]
+    now = datetime.now()
+    create = {
+        "title": "Owner Ann",
+        "description": "owner",
+        "category": "ทั่วไป",
+        "start_date": now.isoformat(),
+        "end_date": (now + timedelta(days=2)).isoformat(),
+    }
+    c = await client.post("/api/annc/", data=create, headers=headers1)
+    assert c.status_code == 201
+    ann_id = c.json()["id"]
+
+    # สมัคร user คนอื่น (professor)
+    signup2 = {
+        "username": "other_prof",
+        "email": "other_prof@example.com",
+        "password": "pass1234",
+        "first_name": "Other",
+        "last_name": "Prof",
+        "birth_date": "1990-01-01",
+        "faculty_id": 1,
+        "year_of_study": 1,
+        "role_id": 1,
+    }
+    r2 = await client.post("/api/auth/signup", json=signup2)
+    token2 = r2.json()["access_token"]
+    headers2 = {"Authorization": f"Bearer {token2}"}
+
+    # พยายาม PATCH -> ควร 403
+    p = await client.patch(f"/api/annc/{ann_id}", json={"title": "x"}, headers=headers2)
+    assert p.status_code == 403
+
+    # พยายาม DELETE -> ควร 403
+    d = await client.delete(f"/api/annc/{ann_id}", headers=headers2)
+    assert d.status_code == 403
+
+
+@pytest.mark.asyncio
+async def test_pagination_out_of_range_returns_empty(
+    client: AsyncClient, sample_announcement
+):
+    r = await client.get("/api/annc/?page=9999&per_page=10")
+    assert r.status_code == 200
+    data = r.json()
+    assert isinstance(data["announcements"], list)
+    # อาจจะว่างหรือมีข้อมูลน้อย แต่ ensure not crashing
+    assert (
+        "total" in data
+        and "page" in data
+        and "per_page" in data
+        and "total_pages" in data
+    )

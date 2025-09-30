@@ -37,7 +37,6 @@ class UserBase(SQLModel):
 
 class UserSimple(UserBase):
     profile_image_url: Optional[str] = None
-    pass
 
 
 class MeRead(UserBase):

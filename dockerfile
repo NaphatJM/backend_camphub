@@ -5,7 +5,6 @@ WORKDIR /usr/src/app
 
 # Copy project files
 COPY pyproject.toml .
-COPY poetry.lock .
 COPY . .
 
 # ติดตั้ง pip, Poetry และ dependencies

@@ -30,6 +30,9 @@ from app.models.announcement_model import AnnouncementCategory
 
 router = APIRouter(prefix="/annc", tags=["announcements"])
 
+# Define constant for repeated message
+NOT_FOUND_ANNOUNCEMENT_MSG = "ไม่พบข่าวประกาศ"
+
 
 @router.get("/", response_model=AnnouncementListResponse)
 async def get_announcements(
@@ -133,7 +136,7 @@ async def get_announcement_by_id(
 ):
     announcement = await session.get(Announcement, announcement_id)
     if not announcement:
-        raise HTTPException(status_code=404, detail="ไม่พบข่าวประกาศ")
+        raise HTTPException(status_code=404, detail=NOT_FOUND_ANNOUNCEMENT_MSG)
     return announcement
 
 
@@ -211,7 +214,7 @@ async def update_announcement(
 
     announcement = await session.get(Announcement, announcement_id)
     if not announcement:
-        raise HTTPException(status_code=404, detail="ไม่พบข่าวประกาศ")
+        raise HTTPException(status_code=404, detail=NOT_FOUND_ANNOUNCEMENT_MSG)
 
     # ตรวจสอบ ownership
     if announcement.created_by != current_user.id:
@@ -264,7 +267,7 @@ async def patch_announcement(
 ):
     announcement = await session.get(Announcement, announcement_id)
     if not announcement:
-        raise HTTPException(status_code=404, detail="ไม่พบข่าวประกาศ")
+        raise HTTPException(status_code=404, detail=NOT_FOUND_ANNOUNCEMENT_MSG)
     if announcement.created_by != current_user.id:
         raise HTTPException(status_code=403, detail="คุณไม่มีสิทธิ์แก้ไขข่าวประกาศนี้")
     update_data = announcement_update.model_dump(exclude_unset=True)
@@ -306,7 +309,7 @@ async def delete_announcement(
 ):
     announcement = await session.get(Announcement, announcement_id)
     if not announcement:
-        raise HTTPException(status_code=404, detail="ไม่พบข่าวประกาศ")
+        raise HTTPException(status_code=404, detail=NOT_FOUND_ANNOUNCEMENT_MSG)
     if announcement.created_by != current_user.id:
         raise HTTPException(status_code=403, detail="คุณไม่มีสิทธิ์ลบข่าวประกาศนี้")
     if announcement.image_url:
