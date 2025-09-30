@@ -17,7 +17,9 @@ services:
       uvicorn app.main:app --host 0.0.0.0 --port 8000
     networks:
       - postgres
-
+    profiles: ["backend"] 
+    #สั่งให้ backend run เฉพาะเมื่อ docker compose --profile backend up -d
+    #สั่งให้ backend down เฉพาะเมื่อ docker compose --profile backend down -d
   postgres:
     build:
       context: .
