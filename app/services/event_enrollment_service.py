@@ -161,7 +161,7 @@ class EventEnrollmentService:
             "event_id": event_id,
             "event_title": event.title,
             "current_enrolled": current_enrolled,
-            "capacity": event.capacity,  # None = unlimited
+            "capacity": event.capacity,
             "is_full": False,
             "available_seats": None,
             "is_active": event.is_active,

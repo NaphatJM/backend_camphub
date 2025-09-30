@@ -5,6 +5,8 @@ from sqlalchemy.orm import selectinload
 from app.models import Course, CourseTeacherLink, User
 from app.schemas.course_schema import CourseCreate, CourseRead, CourseUpdate
 
+NOT_FOUND_COURSE_MSG = "Course not found"
+
 
 class CourseService:
     """
@@ -57,7 +59,7 @@ class CourseService:
         )
         course = result.scalars().first()
         if not course:
-            raise HTTPException(status_code=404, detail="Course not found")
+            raise HTTPException(status_code=404, detail=NOT_FOUND_COURSE_MSG)
         return CourseRead(
             id=course.id,
             course_code=course.course_code,
@@ -128,7 +130,7 @@ class CourseService:
 
         course = await self.session.get(Course, course_id)
         if not course:
-            raise HTTPException(status_code=404, detail="Course not found")
+            raise HTTPException(status_code=404, detail=NOT_FOUND_COURSE_MSG)
 
         update_data = data.model_dump(exclude_unset=True)
         teacher_ids = update_data.pop("teacher_ids", None)
@@ -197,7 +199,7 @@ class CourseService:
         """
         course = await self.session.get(Course, course_id)
         if not course:
-            raise HTTPException(status_code=404, detail="Course not found")
+            raise HTTPException(status_code=404, detail=NOT_FOUND_COURSE_MSG)
         if self.current_user.role_id not in [1, 3]:
             raise HTTPException(
                 status_code=403, detail="Only professors and admins can delete courses"

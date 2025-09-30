@@ -7,6 +7,8 @@ from sqlalchemy.orm import selectinload
 from app.models import User, Room, Location
 from app.schemas.room import RoomCreate, RoomRead, RoomUpdate
 
+NOT_FOUND_ROOM_MSG = "Room not found"
+
 
 class RoomService:
     def __init__(self, session: AsyncSession, current_user: Optional[User] = None):
@@ -31,7 +33,7 @@ class RoomService:
             Room, room_id, options=selectinload(Room.location)
         )
         if not room:
-            raise HTTPException(status_code=404, detail="Room not found")
+            raise HTTPException(status_code=404, detail=NOT_FOUND_ROOM_MSG)
         return RoomRead.model_validate(room)
 
     # --------------------------
@@ -57,7 +59,7 @@ class RoomService:
         self._check_permission()
         room = await self.session.get(Room, room_id)
         if not room:
-            raise HTTPException(status_code=404, detail="Room not found")
+            raise HTTPException(status_code=404, detail=NOT_FOUND_ROOM_MSG)
 
         update_data = data.model_dump(exclude_unset=True)
         if "location_id" in update_data:
@@ -80,7 +82,7 @@ class RoomService:
         self._check_permission()
         room = await self.session.get(Room, room_id)
         if not room:
-            raise HTTPException(status_code=404, detail="Room not found")
+            raise HTTPException(status_code=404, detail=NOT_FOUND_ROOM_MSG)
 
         await self.session.delete(room)
         await self.session.commit()

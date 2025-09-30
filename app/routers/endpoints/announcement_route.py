@@ -30,6 +30,8 @@ from app.models.announcement_model import AnnouncementCategory
 
 router = APIRouter(prefix="/annc", tags=["announcements"])
 
+NOT_FOUND_ANNOUNCEMENT_MSG = "ไม่พบข่าวประกาศ"
+
 
 async def update_announcement_service(announcement, update_data, session):
     if "start_date" in update_data:
@@ -142,7 +144,7 @@ async def get_announcement_by_id(
 ):
     announcement = await session.get(Announcement, announcement_id)
     if not announcement:
-        raise HTTPException(status_code=404, detail="ไม่พบข่าวประกาศ")
+        raise HTTPException(status_code=404, detail=NOT_FOUND_ANNOUNCEMENT_MSG)
     return announcement
 
 
@@ -219,7 +221,7 @@ async def update_announcement(
 ):
     announcement = await session.get(Announcement, announcement_id)
     if not announcement:
-        raise HTTPException(status_code=404, detail="ไม่พบข่าวประกาศ")
+        raise HTTPException(status_code=404, detail=NOT_FOUND_ANNOUNCEMENT_MSG)
     # ตรวจสอบ ownership
     if (
         announcement.created_by != current_user.id
@@ -238,7 +240,7 @@ async def delete_announcement(
 ):
     announcement = await session.get(Announcement, announcement_id)
     if not announcement:
-        raise HTTPException(status_code=404, detail="ไม่พบข่าวประกาศ")
+        raise HTTPException(status_code=404, detail=NOT_FOUND_ANNOUNCEMENT_MSG)
     if (
         announcement.created_by != current_user.id
         and getattr(current_user, "role_id", None) != 1
