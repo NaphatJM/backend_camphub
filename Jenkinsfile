@@ -96,7 +96,7 @@ pipeline {
 
                 # Start containers (backend, postgres, pgadmin) ตาม docker-compose.yml
                 docker-compose down || true
-                docker compose --profile backend down -d
+                docker compose --profile backend down
                 docker-compose up -d --build
                 docker compose --profile backend up -d --build
 
