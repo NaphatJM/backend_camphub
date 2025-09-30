@@ -148,7 +148,7 @@ pipeline {
         steps {
             sh '''
                 # ลบ image local หลัง push
-                docker rmi backend_camphub:latest || true
+                docker rmi backend_camphub || true
             '''
         }
       }
