@@ -81,6 +81,37 @@ pipeline {
                 }
             }
         }
+
+        stage('Build Docker Image') {
+            steps {
+                sh '''
+                    # Build backend image จาก Dockerfile
+                    docker build -t backend_camphub:latest -f Dockerfile .
+                '''
+            }
+        }
+
+        stage('Push Docker Image to DockerHub') {
+            steps {
+                withCredentials([usernamePassword(
+                    credentialsId: 'DOCKERHUB-TOKEN',
+                    usernameVariable: 'DOCKER_USER',
+                    passwordVariable: 'DOCKER_PASS'
+                )]) {
+                    sh '''
+                        # Login DockerHub
+                        echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+
+                        # Tag image ด้วย DockerHub user
+                        docker tag backend_camphub:latest $DOCKER_USER/backend_camphub:latest
+
+                        # Push ไป DockerHub
+                        docker push $DOCKER_USER/backend_camphub:latest
+                    '''
+                }
+            }
+        }
+
         stage('Deploy with Docker Compose') {
           agent any
           steps {
@@ -97,6 +128,7 @@ pipeline {
                 # Start containers (backend, postgres, pgadmin) ตาม docker-compose.yml
                 docker-compose down || true
                 docker compose --profile backend down
+                docker compose pull
                 docker-compose up -d --build
                 docker compose --profile backend up -d --build
 

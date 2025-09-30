@@ -1,8 +1,6 @@
 services:
   backend:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: ${DOCKER_USER}/backend_camphub:latest
     container_name: backend_camphub
     restart: unless-stopped
     depends_on:
@@ -19,7 +17,7 @@ services:
       - postgres
     profiles: ["backend"] 
     #สั่งให้ backend run เฉพาะเมื่อ docker compose --profile backend up -d
-    #สั่งให้ backend down เฉพาะเมื่อ docker compose --profile backend down -d
+    #สั่งให้ backend down เฉพาะเมื่อ docker compose --profile backend down
   postgres:
     build:
       context: .
