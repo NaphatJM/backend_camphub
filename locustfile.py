@@ -4,25 +4,25 @@ import random, string
 
 class WebsiteUser(HttpUser):
     wait_time = between(1, 3)
+
     token = None
+    user_email = None
+    user_password = None
+
     last_bookmark_id = None
     last_event_enrollment_id = None
     last_course_enrollment_id = None
 
+    # --------------------------
+    # Lifecycle
+    # --------------------------
     def on_start(self):
-        self.login()
+        # สมัคร user + login ก่อนเริ่ม task
+        self.do_signup_and_login()
 
-    def login(self):
-        email = "student.doe@camphub.com"
-        password = "student123"
-        response = self.client.post(
-            "/api/auth/signin", json={"email": email, "password": password}
-        )
-        if response.status_code == 200 and "access_token" in response.json():
-            self.token = response.json()["access_token"]
-        else:
-            self.token = None
-
+    # --------------------------
+    # Utils
+    # --------------------------
     def auth_headers(self):
         return {"Authorization": f"Bearer {self.token}"} if self.token else {}
 
@@ -40,21 +40,50 @@ class WebsiteUser(HttpUser):
             "role_id": 2,
         }
 
-    @task(0)
-    def signup(self):
-        self.client.post("/api/auth/signup", json=self.random_user())
+    # --------------------------
+    # Signup + Login (utility)
+    # --------------------------
+    def do_signup_and_login(self):
+        user_data = self.random_user()
+        res = self.client.post("/api/auth/signup", json=user_data)
+        if res.status_code in (200, 201):
+            body = res.json()
+            if "access_token" in body:
+                self.token = body["access_token"]
+                self.user_email = user_data["email"]
+                self.user_password = user_data["password"]
+            else:
+                self.token = None
+        else:
+            self.token = None
+
+    # --------------------------
+    # Tasks
+    # --------------------------
+
+    @task(1)
+    def signup_task(self):
+        """จำลอง load signup อย่างเดียว"""
+        user_data = self.random_user()
+        self.client.post("/api/auth/signup", json=user_data)
 
     @task
     def get_me(self):
+        if not self.token:
+            self.do_signup_and_login()
         self.client.get("/api/user", headers=self.auth_headers())
 
     @task
     def update_me(self):
+        if not self.token:
+            self.do_signup_and_login()
         update_data = {"first_name": "Locust", "last_name": "Updated"}
         self.client.put("/api/user", json=update_data, headers=self.auth_headers())
 
     @task
     def get_faculties(self):
+        if not self.token:
+            self.do_signup_and_login()
         self.client.get("/api/faculty", headers=self.auth_headers())
 
     @task
@@ -75,24 +104,24 @@ class WebsiteUser(HttpUser):
 
     @task
     def add_bookmark(self):
-        if not self.last_bookmark_id:
-            annc_id = 1
-            with self.client.post(
-                f"/api/annc/bookmarks/{annc_id}",
-                headers=self.auth_headers(),
-                catch_response=True,
-            ) as res:
-                if res.status_code == 200:
-                    self.last_bookmark_id = res.json().get("id")
+        if not self.token:
+            self.do_signup_and_login()
+        annc_id = 1
+        with self.client.post(
+            f"/api/annc/bookmarks/{annc_id}",
+            headers=self.auth_headers(),
+            catch_response=True,
+        ) as res:
+            if res.status_code == 200:
+                res.success()
+            elif res.status_code == 400:
+                detail = res.json().get("detail", "")
+                if "bookmark" in detail or "bookmark ข่าวประกาศนี้แล้ว" in detail:
                     res.success()
-                elif res.status_code == 400:
-                    detail = res.json().get("detail", "")
-                    if "bookmark ข่าวประกาศนี้แล้ว" in detail:
-                        res.success()
-                    else:
-                        res.failure(res.text)
                 else:
                     res.failure(res.text)
+            else:
+                res.failure(res.text)
 
     @task
     def get_bookmarks(self):
@@ -101,9 +130,7 @@ class WebsiteUser(HttpUser):
             headers=self.auth_headers(),
             catch_response=True,
         ) as res:
-            if res.status_code == 200:
-                res.success()
-            elif res.status_code == 422:
+            if res.status_code in (200, 422):
                 res.success()
             else:
                 res.failure(res.text)
@@ -116,24 +143,28 @@ class WebsiteUser(HttpUser):
                 headers=self.auth_headers(),
                 catch_response=True,
             ) as res:
-                if res.status_code == 200:
+                if res.status_code in (200, 404):
                     self.last_bookmark_id = None
-                    res.success()
-                elif res.status_code == 404:
                     res.success()
                 else:
                     res.failure(res.text)
 
     @task
     def get_events(self):
+        if not self.token:
+            self.do_signup_and_login()
         self.client.get("/api/events", headers=self.auth_headers())
 
     @task
     def get_event_by_id(self):
+        if not self.token:
+            self.do_signup_and_login()
         self.client.get("/api/events/1", headers=self.auth_headers())
 
     @task
     def enroll_event(self):
+        if not self.token:
+            self.do_signup_and_login()
         if not self.last_event_enrollment_id:
             with self.client.post(
                 "/api/event-enrollments/enroll",
@@ -155,6 +186,8 @@ class WebsiteUser(HttpUser):
 
     @task
     def get_event_enrollments(self):
+        if not self.token:
+            self.do_signup_and_login()
         self.client.get("/api/event-enrollments/user", headers=self.auth_headers())
 
     @task
@@ -165,24 +198,28 @@ class WebsiteUser(HttpUser):
                 headers=self.auth_headers(),
                 catch_response=True,
             ) as res:
-                if res.status_code == 200:
+                if res.status_code in (200, 404):
                     self.last_event_enrollment_id = None
-                    res.success()
-                elif res.status_code == 404:
                     res.success()
                 else:
                     res.failure(res.text)
 
     @task
     def get_courses(self):
+        if not self.token:
+            self.do_signup_and_login()
         self.client.get("/api/courses", headers=self.auth_headers())
 
     @task
     def get_course_by_id(self):
+        if not self.token:
+            self.do_signup_and_login()
         self.client.get("/api/courses/1", headers=self.auth_headers())
 
     @task
     def enroll_course(self):
+        if not self.token:
+            self.do_signup_and_login()
         if not self.last_course_enrollment_id:
             with self.client.post(
                 "/api/enrollments/enroll",
@@ -204,6 +241,8 @@ class WebsiteUser(HttpUser):
 
     @task
     def get_enrolled_courses(self):
+        if not self.token:
+            self.do_signup_and_login()
         self.client.get("/api/enrollments/me", headers=self.auth_headers())
 
     @task
@@ -214,26 +253,32 @@ class WebsiteUser(HttpUser):
                 headers=self.auth_headers(),
                 catch_response=True,
             ) as res:
-                if res.status_code == 200:
+                if res.status_code in (200, 404):
                     self.last_course_enrollment_id = None
-                    res.success()
-                elif res.status_code == 404:
                     res.success()
                 else:
                     res.failure(res.text)
 
     @task
     def get_course_schedule(self):
+        if not self.token:
+            self.do_signup_and_login()
         self.client.get("/api/course_schedules", headers=self.auth_headers())
 
     @task
     def get_rooms(self):
+        if not self.token:
+            self.do_signup_and_login()
         self.client.get("/api/room", headers=self.auth_headers())
 
     @task
     def get_locations(self):
+        if not self.token:
+            self.do_signup_and_login()
         self.client.get("/api/location", headers=self.auth_headers())
 
     @task
     def get_location_by_id(self):
+        if not self.token:
+            self.do_signup_and_login()
         self.client.get("/api/location/1", headers=self.auth_headers())
