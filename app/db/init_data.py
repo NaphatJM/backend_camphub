@@ -679,11 +679,35 @@ async def init_demo_courses():
             description="ฟิสิกส์ประยุกต์สำหรับวิศวกรรม",
             created_at=datetime.now(),
         )
+        course4 = Course(
+            course_code="CHEM101",
+            course_name="Introduction to Chemistry",
+            credits=3,
+            available_seats=45,
+            description="พื้นฐานเคมีสำหรับวิศวกรรม",
+            created_at=datetime.now(),
+        )
+        course5 = Course(
+            course_code="ENG201",
+            course_name="English for Engineers",
+            credits=3,
+            available_seats=50,
+            description="ภาษาอังกฤษสำหรับวิศวกรรม",
+            created_at=datetime.now(),
+        )
+        course6 = Course(
+            course_code="HIST101",
+            course_name="Introduction to History",
+            credits=3,
+            available_seats=50,
+            description="พื้นฐานประวัติศาสตร์สำหรับวิศวกรรม",
+            created_at=datetime.now(),
+        )
 
-        for c in [course1, course2, course3]:
+        for c in [course1, course2, course3, course4, course5, course6]:
             c.teachers.append(teacher)
 
-        session.add_all([course1, course2, course3])
+        session.add_all([course1, course2, course3, course4, course5, course6])
         await session.flush()  # เพื่อให้ได้ course.id
 
         # ดึง room
@@ -727,6 +751,72 @@ async def init_demo_courses():
                 start_time=time(10, 0),
                 end_time=time(12, 0),
                 room_id=room_dict["S301"],
+            ),
+            # course4 (CHEM101)
+            CourseSchedule(
+                course_id=course4.id,
+                day_of_week="Tuesday",
+                start_time=time(9, 0),
+                end_time=time(11, 0),
+                room_id=room_dict["B201"],
+            ),
+            CourseSchedule(
+                course_id=course4.id,
+                day_of_week="Thursday",
+                start_time=time(10, 0),
+                end_time=time(12, 0),
+                room_id=room_dict["B201"],
+            ),
+            CourseSchedule(
+                course_id=course4.id,
+                day_of_week="Friday",
+                start_time=time(13, 0),
+                end_time=time(15, 0),
+                room_id=room_dict["B201"],
+            ),
+            # course5 (ENG201)
+            CourseSchedule(
+                course_id=course5.id,
+                day_of_week="Monday",
+                start_time=time(14, 0),
+                end_time=time(16, 0),
+                room_id=room_dict["C301"],
+            ),
+            CourseSchedule(
+                course_id=course5.id,
+                day_of_week="Wednesday",
+                start_time=time(9, 0),
+                end_time=time(11, 0),
+                room_id=room_dict["C301"],
+            ),
+            CourseSchedule(
+                course_id=course5.id,
+                day_of_week="Friday",
+                start_time=time(14, 0),
+                end_time=time(16, 0),
+                room_id=room_dict["C301"],
+            ),
+            # course6 (HIST101)
+            CourseSchedule(
+                course_id=course6.id,
+                day_of_week="Tuesday",
+                start_time=time(13, 0),
+                end_time=time(15, 0),
+                room_id=room_dict["A101"],
+            ),
+            CourseSchedule(
+                course_id=course6.id,
+                day_of_week="Thursday",
+                start_time=time(9, 0),
+                end_time=time(11, 0),
+                room_id=room_dict["A101"],
+            ),
+            CourseSchedule(
+                course_id=course6.id,
+                day_of_week="Friday",
+                start_time=time(16, 0),
+                end_time=time(18, 0),
+                room_id=room_dict["A101"],
             ),
         ]
 
@@ -902,6 +992,30 @@ async def init_demo_enrollments():
             Enrollment(
                 course_id=courses[2].id,
                 user_id=users[0].id,
+                status="enrolled",
+                enrollment_at=datetime.now(),
+            ),
+            Enrollment(
+                course_id=courses[3].id,
+                user_id=users[2].id,
+                status="enrolled",
+                enrollment_at=datetime.now(),
+            ),
+            Enrollment(
+                course_id=courses[5].id,
+                user_id=users[2].id,
+                status="enrolled",
+                enrollment_at=datetime.now(),
+            ),
+            Enrollment(
+                course_id=courses[4].id,
+                user_id=users[1].id,
+                status="enrolled",
+                enrollment_at=datetime.now(),
+            ),
+            Enrollment(
+                course_id=courses[5].id,
+                user_id=users[1].id,
                 status="enrolled",
                 enrollment_at=datetime.now(),
             ),
