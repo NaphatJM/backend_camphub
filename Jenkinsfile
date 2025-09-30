@@ -99,6 +99,8 @@ pipeline {
                     passwordVariable: 'DOCKER_PASS'
                 )]) {
                     sh '''
+                        echo "Docker username: $DOCKER_USER"
+                        
                         # Login DockerHub
                         echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
 
