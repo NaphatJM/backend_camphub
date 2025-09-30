@@ -1,5 +1,5 @@
 from typing import List
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.db import get_session
@@ -20,7 +20,10 @@ async def get_rooms(session: AsyncSession = Depends(get_session)):
 @router.get("/{room_id}", response_model=RoomRead)
 async def get_room_by_id(room_id: int, session: AsyncSession = Depends(get_session)):
     service = RoomService(session)
-    return await service.get_by_id(room_id)
+    room = await service.get_by_id(room_id)
+    if not room:
+        raise HTTPException(status_code=404, detail="ไม่พบห้อง")
+    return room
 
 
 @router.post("/", response_model=RoomRead)

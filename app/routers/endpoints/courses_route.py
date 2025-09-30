@@ -17,7 +17,7 @@ async def get_courses(
 
 
 @router.get("/{course_id}", response_model=CourseRead)
-async def get_course(
+async def get_course_by_id(
     course_id: int,
     session: AsyncSession = Depends(get_session),
 ):
