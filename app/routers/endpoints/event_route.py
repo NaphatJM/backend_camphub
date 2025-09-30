@@ -42,6 +42,7 @@ async def create_event(
     end_date: datetime = Form(...),
     capacity: Optional[int] = Form(None),
     is_active: bool = Form(True),
+    location: Optional[str] = Form(None),
     image: Optional[UploadFile] = File(None),
     current_user: User = Depends(get_current_user),
     session: AsyncSession = Depends(get_session),
@@ -72,6 +73,7 @@ async def create_event(
         capacity=capacity,
         is_active=is_active,
         image_url=image_url,
+        location=location,
         created_by=current_user.id,
         updated_by=current_user.id,
     )

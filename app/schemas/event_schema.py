@@ -11,6 +11,7 @@ class EventBase(BaseModel):
     capacity: Optional[int] = None
     is_active: bool = True
     image_url: Optional[str] = None
+    location: Optional[str] = None
 
 
 class EventCreate(EventBase):
@@ -24,6 +25,7 @@ class EventUpdate(BaseModel):
     end_date: Optional[datetime] = None
     capacity: Optional[int] = None
     is_active: Optional[bool] = None
+    location: Optional[str] = None
 
 
 class EventResponse(EventBase):
@@ -70,6 +72,7 @@ class EventListResponse(BaseModel):
     capacity: Optional[int] = None
     is_active: bool = True
     image_url: Optional[str] = None
+    location: Optional[str] = None
     created_by: int
     enrolled_count: int = 0
 
