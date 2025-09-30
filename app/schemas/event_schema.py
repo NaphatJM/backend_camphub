@@ -3,6 +3,28 @@ from pydantic import BaseModel
 from datetime import datetime
 
 
+def get_event_is_full(capacity: Optional[int], enrolled_count: int) -> bool:
+    if capacity is None:
+        return False
+    return enrolled_count >= capacity
+
+
+def get_event_available_seats(
+    capacity: Optional[int], enrolled_count: int
+) -> Optional[int]:
+    if capacity is None:
+        return None
+    return max(0, capacity - enrolled_count)
+
+
+def get_event_capacity_status(capacity: Optional[int], enrolled_count: int) -> str:
+    if capacity is None:
+        return "ไม่จำกัด"
+    if get_event_is_full(capacity, enrolled_count):
+        return "เต็มแล้ว"
+    return f"เหลือ {get_event_available_seats(capacity, enrolled_count)} ที่นั่ง"
+
+
 class EventBase(BaseModel):
     title: str
     description: Optional[str] = None
@@ -41,26 +63,15 @@ class EventResponse(EventBase):
 
     @property
     def is_full(self) -> bool:
-        """ตรวจสอบว่า event เต็มแล้วหรือยัง"""
-        if self.capacity is None:
-            return False
-        return self.enrolled_count >= self.capacity
+        return get_event_is_full(self.capacity, self.enrolled_count)
 
     @property
     def available_seats(self) -> Optional[int]:
-        """จำนวนที่นั่งที่เหลือ"""
-        if self.capacity is None:
-            return None
-        return max(0, self.capacity - self.enrolled_count)
+        return get_event_available_seats(self.capacity, self.enrolled_count)
 
     @property
     def capacity_status(self) -> str:
-        """สถานะ capacity"""
-        if self.capacity is None:
-            return "ไม่จำกัด"
-        if self.is_full:
-            return "เต็มแล้ว"
-        return f"เหลือ {self.available_seats} ที่นั่ง"
+        return get_event_capacity_status(self.capacity, self.enrolled_count)
 
 
 class EventListResponse(BaseModel):
@@ -81,23 +92,12 @@ class EventListResponse(BaseModel):
 
     @property
     def is_full(self) -> bool:
-        """ตรวจสอบว่า event เต็มแล้วหรือยัง"""
-        if self.capacity is None:
-            return False
-        return self.enrolled_count >= self.capacity
+        return get_event_is_full(self.capacity, self.enrolled_count)
 
     @property
     def available_seats(self) -> Optional[int]:
-        """จำนวนที่นั่งที่เหลือ"""
-        if self.capacity is None:
-            return None
-        return max(0, self.capacity - self.enrolled_count)
+        return get_event_available_seats(self.capacity, self.enrolled_count)
 
     @property
     def capacity_status(self) -> str:
-        """สถานะ capacity"""
-        if self.capacity is None:
-            return "ไม่จำกัด"
-        if self.is_full:
-            return "เต็มแล้ว"
-        return f"เหลือ {self.available_seats} ที่นั่ง"
+        return get_event_capacity_status(self.capacity, self.enrolled_count)
