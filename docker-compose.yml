@@ -1,6 +1,6 @@
 services:
   backend:
-    image: ${DOCKER_USER}/backend_camphub:latest
+    image: "${DOCKER_USER}/backend_camphub:latest"
     container_name: backend_camphub
     restart: unless-stopped
     depends_on:
