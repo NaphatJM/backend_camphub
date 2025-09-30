@@ -107,7 +107,7 @@ pipeline {
                 # Init DB (create tables)
                 docker exec backend_camphub 
                 ls
-                python ./scripts/init_db.py
+                python ./scripts/init_data.py
                 '''
           }
       }
