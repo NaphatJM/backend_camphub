@@ -88,7 +88,7 @@ pipeline {
                 # ติดตั้ง docker-compose ถ้ายังไม่มี
                 export PATH="$HOME/.local/bin:$PATH"
                 mkdir -p $HOME/.local/bin
-                
+
                 if ! command -v docker-compose >/dev/null 2>&1; then
                   curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o $HOME/.local/bin/docker-compose
                   chmod +x $HOME/.local/bin/docker-compose
@@ -103,6 +103,11 @@ pipeline {
                   docker exec camphub_db pg_isready -U $POSTGRES_USER -d $POSTGRES_DB && break
                   sleep 2
                 done
+
+                # Init DB (create tables)
+                docker exec backend_camphub 
+                ls
+                python ./scripts/init_db.py
                 '''
           }
       }
