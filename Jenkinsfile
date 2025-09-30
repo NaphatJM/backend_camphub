@@ -109,12 +109,18 @@ pipeline {
 
                         # Push ไป DockerHub
                         docker push $DOCKER_USER/backend_camphub:latest
-                        
-                        # ลบ image local หลัง push
-                        docker rmi backend_camphub:latest
                     '''
                 }
             }
+        }
+
+        stage('Clean Local Docker Image') {
+          steps {
+              sh '''
+                  # ลบ image local หลัง push
+                  docker rmi backend_camphub:latest || true
+              '''
+          }
         }
 
         stage('Deploy with Docker Compose') {
