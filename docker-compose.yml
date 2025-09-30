@@ -1,4 +1,23 @@
 services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: backend_camphub
+    restart: unless-stopped
+    depends_on:
+      - postgres
+    environment:
+      SQLDB_URL: postgresql+asyncpg://camphub_user:camphub_pass@postgres:5432/camphub_db
+      SECRET_KEY: ${SECRET_KEY}
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY}
+    ports:
+      - "8000:8000"
+    command: >
+      uvicorn app.main:app --host 0.0.0.0 --port 8000
+    networks:
+      - postgres
+
   postgres:
     build:
       context: .
@@ -13,6 +32,8 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    networks:
+      - postgres
 
   pgadmin:
     image: dpage/pgadmin4:latest
@@ -27,6 +48,8 @@ services:
       - postgres
     volumes:
       - pgadmin_data:/var/lib/pgadmin
+    networks:
+      - postgres
 
 networks:
   postgres:
