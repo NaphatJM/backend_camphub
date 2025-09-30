@@ -81,49 +81,75 @@ pipeline {
                 }
             }
         }
-
-        stage('Build Docker Image') {
-            agent any
-            steps {
-                sh 'docker build -t backend_camphub:latest .'
-            }
-        }
-
-        stage('Deploy Container') {
-            agent any
-            steps {
-                sh '''
-                # ติดตั้ง docker-compose ถ้ายังไม่มี (ติดตั้งใน $HOME/.local/bin)
+        stage('Deploy with Docker Compose') {
+          agent any
+          steps {
+              sh '''
+                # ติดตั้ง docker-compose ถ้ายังไม่มี
                 export PATH="$HOME/.local/bin:$PATH"
                 mkdir -p $HOME/.local/bin
+                
                 if ! command -v docker-compose >/dev/null 2>&1; then
                   curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o $HOME/.local/bin/docker-compose
                   chmod +x $HOME/.local/bin/docker-compose
                 fi
 
-                # Start DB & pgadmin
+                # Start containers (backend, postgres, pgadmin) ตาม docker-compose.yml
                 docker-compose down || true
-                docker-compose up -d
+                docker-compose up -d --build
 
                 # รอ DB พร้อม (optional)
                 for i in {1..10}; do
-                  docker exec camphub_db pg_isready && break
+                  docker exec camphub_db pg_isready -U $POSTGRES_USER -d $POSTGRES_DB && break
                   sleep 2
                 done
-
-                docker stop backend_camphub || true
-                docker rm backend_camphub || true
-                docker run -d \
-                        -e SQLDB_URL=$SQLDB_URL \
-                        -e SECRET_KEY=$SECRET_KEY \
-                        -e JWT_SECRET_KEY=$JWT_SECRET_KEY \
-                        --name backend_camphub \
-                        -p 8000:8000 \
-                        backend_camphub:latest \
-                        uvicorn app.main:app --host 0.0.0.0 --port 8000
                 '''
-            }
-        }
+          }
+      }
+
+    //     stage('Build Docker Image') {
+    //         agent any
+    //         steps {
+    //             sh 'docker build -t backend_camphub:latest .'
+    //         }
+    //     }
+
+    //     stage('Deploy Container') {
+    //         agent any
+    //         steps {
+    //             sh '''
+    //             # ติดตั้ง docker-compose ถ้ายังไม่มี (ติดตั้งใน $HOME/.local/bin)
+    //             export PATH="$HOME/.local/bin:$PATH"
+    //             mkdir -p $HOME/.local/bin
+    //             if ! command -v docker-compose >/dev/null 2>&1; then
+    //               curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o $HOME/.local/bin/docker-compose
+    //               chmod +x $HOME/.local/bin/docker-compose
+    //             fi
+
+    //             # Start DB & pgadmin
+    //             docker-compose down || true
+    //             docker-compose up -d
+
+    //             # รอ DB พร้อม (optional)
+    //             for i in {1..10}; do
+    //               docker exec camphub_db pg_isready && break
+    //               sleep 2
+    //             done
+
+    //             docker stop backend_camphub || true
+    //             docker rm backend_camphub || true
+    //             docker run -d \
+    //                     --network camphub_default \
+    //                     -e SQLDB_URL=$SQLDB_URL \
+    //                     -e SECRET_KEY=$SECRET_KEY \
+    //                     -e JWT_SECRET_KEY=$JWT_SECRET_KEY \
+    //                     --name backend_camphub \
+    //                     -p 8000:8000 \
+    //                     backend_camphub:latest \
+    //                     uvicorn app.main:app --host 0.0.0.0 --port 8000
+    //             '''
+    //         }
+    //     }
     }
 
     post {
