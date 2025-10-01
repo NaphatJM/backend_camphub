@@ -24,17 +24,17 @@ async def get_user_bookmarks(
     """ดู bookmark ทั้งหมดของผู้ใช้ปัจจุบัน"""
 
     # นับจำนวน bookmark ทั้งหมด
-    total_count_result = await session.exec(
+    total_result = await session.exec(
         select(func.count(AnnouncementBookmark.id)).where(
             AnnouncementBookmark.user_id == current_user.id
         )
     )
-    total = total_count_result.scalar()
+    total = total_result.scalar() or 0
 
     # คำนวณ offset
     offset = (page - 1) * per_page
 
-    # ดึงข้อมูล bookmarks พร้อม announcement (ใช้ eager loading)
+    # ดึงข้อมูล bookmarks พร้อม announcement
     bookmarks_result = await session.exec(
         select(AnnouncementBookmark)
         .options(selectinload(AnnouncementBookmark.announcement))
@@ -45,54 +45,30 @@ async def get_user_bookmarks(
     )
     bookmarks = bookmarks_result.scalars().all()
 
-    # แปลงเป็น response format
-    bookmark_responses = []
-    for bookmark in bookmarks:
-        try:
-            # ใช้ model_validate สำหรับความปลอดภัย
-            bookmark_data = {
+    # แปลงเป็น response models (handle announcement None ได้ตรง ๆ)
+    bookmark_responses = [
+        BookmarkResponse.model_validate(
+            {
                 "id": bookmark.id,
                 "user_id": bookmark.user_id,
                 "announcement_id": bookmark.announcement_id,
                 "created_at": bookmark.created_at,
                 "announcement": bookmark.announcement,
             }
-
-            bookmark_response = BookmarkResponse.model_validate(bookmark_data)
-            bookmark_responses.append(bookmark_response)
-        except Exception as e:
-            # ถ้ามีปัญหาให้สร้างแบบไม่มี announcement
-            try:
-                bookmark_data = {
-                    "id": bookmark.id,
-                    "user_id": bookmark.user_id,
-                    "announcement_id": bookmark.announcement_id,
-                    "created_at": bookmark.created_at,
-                    "announcement": None,
-                }
-                bookmark_response = BookmarkResponse.model_validate(bookmark_data)
-                bookmark_responses.append(bookmark_response)
-            except Exception as e2:
-                print(
-                    f"Error creating BookmarkResponse for bookmark {bookmark.id}: {e2}"
-                )
-                continue
+        )
+        for bookmark in bookmarks
+    ]
 
     # คำนวณจำนวนหน้าทั้งหมด
-    total_pages = max(1, (total + per_page - 1) // per_page) if total > 0 else 1
+    total_pages = (total + per_page - 1) // per_page if total else 1
 
-    try:
-        return BookmarkListResponse(
-            bookmarks=bookmark_responses,
-            total=total,
-            page=page,
-            per_page=per_page,
-            total_pages=total_pages,
-        )
-    except Exception as e:
-        raise HTTPException(
-            status_code=500, detail=f"เกิดข้อผิดพลาดในการสร้าง response: {str(e)}"
-        )
+    return BookmarkListResponse(
+        bookmarks=bookmark_responses,
+        total=total,
+        page=page,
+        per_page=per_page,
+        total_pages=total_pages,
+    )
 
 
 @router.post("/{announcement_id}", response_model=BookmarkResponse)
@@ -109,40 +85,31 @@ async def add_bookmark(
         raise HTTPException(status_code=404, detail="ไม่พบข่าวประกาศ")
 
     new_bookmark = AnnouncementBookmark(
-        user_id=current_user.id, announcement_id=announcement_id
+        user_id=current_user.id,
+        announcement_id=announcement_id,
     )
 
-    # เพิ่ม proper constraint error handling
     try:
         session.add(new_bookmark)
         await session.commit()
-        await session.refresh(new_bookmark)
+        # refresh พร้อม preload relationship announcement
+        await session.refresh(new_bookmark, attribute_names=["announcement"])
 
-        # ดึงข้อมูล bookmark พร้อม announcement (ใช้ eager loading)
-        bookmark_with_announcement = await session.exec(
-            select(AnnouncementBookmark)
-            .options(selectinload(AnnouncementBookmark.announcement))
-            .where(AnnouncementBookmark.id == new_bookmark.id)
+        return BookmarkResponse.model_validate(
+            {
+                "id": new_bookmark.id,
+                "user_id": new_bookmark.user_id,
+                "announcement_id": new_bookmark.announcement_id,
+                "created_at": new_bookmark.created_at,
+                "announcement": new_bookmark.announcement,
+            }
         )
-        bookmark = bookmark_with_announcement.scalar_one()
 
-        return BookmarkResponse(
-            id=bookmark.id,
-            user_id=bookmark.user_id,
-            announcement_id=bookmark.announcement_id,
-            created_at=bookmark.created_at,
-            announcement=bookmark.announcement,
-        )
     except IntegrityError as e:
         await session.rollback()
         if "unique_user_announcement_bookmark" in str(e):
-            raise HTTPException(status_code=400, detail="คุณได้ bookmark ข่าวประกาศนี้แล้ว")
+            raise HTTPException(status_code=409, detail="คุณได้ bookmark ข่าวประกาศนี้แล้ว")
         raise HTTPException(status_code=500, detail="เกิดข้อผิดพลาดในการบันทึกข้อมูล")
-    except Exception as e:
-        await session.rollback()
-        raise HTTPException(
-            status_code=500, detail=f"เกิดข้อผิดพลาดในการสร้าง bookmark: {str(e)}"
-        )
 
 
 @router.delete("/{announcement_id}")
@@ -166,6 +133,11 @@ async def remove_bookmark(
 
     if not bookmark:
         raise HTTPException(status_code=404, detail="ไม่พบ bookmark นี้")
+    if (
+        bookmark.user_id != current_user.id
+        and getattr(current_user, "role_id", None) != 1
+    ):
+        raise HTTPException(status_code=403, detail="คุณไม่มีสิทธิ์ลบ bookmark นี้")
 
     await session.delete(bookmark)
     await session.commit()
