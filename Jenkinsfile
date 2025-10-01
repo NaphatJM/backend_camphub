@@ -64,7 +64,7 @@ pipeline {
                                   -Dsonar.login=${SONARQUBE} \
                                   -Dsonar.exclusions=**/tests/**,**/*.md \
                                   -Dsonar.python.ignoreHeaderComments=true \
-                                  -Dsonar.python.coverage.reportPaths=coverage.xml
+                                  -Dsonar.python.coverage.reportPaths=.coverage
                           '''
                         }
                     }
