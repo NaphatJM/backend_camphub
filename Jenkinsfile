@@ -114,15 +114,6 @@ pipeline {
             }
         }
 
-        stage('Clean Local Docker Image') {
-          steps {
-              sh '''
-                  # ลบ image local หลัง push
-                  docker rmi backend_camphub:latest || true
-              '''
-          }
-        }
-
         stage('Deploy with Docker Compose') {
           agent any
           steps {
@@ -152,7 +143,18 @@ pipeline {
                 '''
           }
       }
+
+      stage('Clean Local Docker Image') {
+        steps {
+            sh '''
+                # ลบ image local หลัง push
+                docker rmi backend_camphub || true
+                docker image prune -f || true
+            '''
+        }
+      }
     }
+
 
     post {
         always {
