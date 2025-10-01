@@ -758,21 +758,21 @@ async def init_demo_courses():
                 day_of_week="Tuesday",
                 start_time=time(9, 0),
                 end_time=time(11, 0),
-                room_id=room_dict["B201"],
+                room_id=room_dict["BSc201"],
             ),
             CourseSchedule(
                 course_id=course4.id,
                 day_of_week="Thursday",
                 start_time=time(10, 0),
                 end_time=time(12, 0),
-                room_id=room_dict["B201"],
+                room_id=room_dict["BSc201"],
             ),
             CourseSchedule(
                 course_id=course4.id,
                 day_of_week="Friday",
                 start_time=time(13, 0),
                 end_time=time(15, 0),
-                room_id=room_dict["B201"],
+                room_id=room_dict["BSc201"],
             ),
             # course5 (ENG201)
             CourseSchedule(
@@ -780,21 +780,21 @@ async def init_demo_courses():
                 day_of_week="Monday",
                 start_time=time(14, 0),
                 end_time=time(16, 0),
-                room_id=room_dict["C301"],
+                room_id=room_dict["Law101"],
             ),
             CourseSchedule(
                 course_id=course5.id,
                 day_of_week="Wednesday",
                 start_time=time(9, 0),
                 end_time=time(11, 0),
-                room_id=room_dict["C301"],
+                room_id=room_dict["Law101"],
             ),
             CourseSchedule(
                 course_id=course5.id,
                 day_of_week="Friday",
                 start_time=time(14, 0),
                 end_time=time(16, 0),
-                room_id=room_dict["C301"],
+                room_id=room_dict["Law101"],
             ),
             # course6 (HIST101)
             CourseSchedule(
@@ -802,21 +802,21 @@ async def init_demo_courses():
                 day_of_week="Tuesday",
                 start_time=time(13, 0),
                 end_time=time(15, 0),
-                room_id=room_dict["A101"],
+                room_id=room_dict["FMS101"],
             ),
             CourseSchedule(
                 course_id=course6.id,
                 day_of_week="Thursday",
                 start_time=time(9, 0),
                 end_time=time(11, 0),
-                room_id=room_dict["A101"],
+                room_id=room_dict["FMS101"],
             ),
             CourseSchedule(
                 course_id=course6.id,
                 day_of_week="Friday",
                 start_time=time(16, 0),
                 end_time=time(18, 0),
-                room_id=room_dict["A101"],
+                room_id=room_dict["FMS101"],
             ),
         ]
 
