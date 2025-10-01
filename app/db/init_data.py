@@ -450,35 +450,191 @@ async def init_locations_and_rooms():
             code="BSc",
             latitude=7.006472135413086,
             longitude=100.49951107880403,
+            description="เปิดจันทร์-ศุกร์ 08:00-17:00\nโทร: +66-74-287-0041\nเว็บไซต์: http://www.sci.psu.ac.th/",
         )
         loc2 = Location(
             name="อาคารวิจัยวิศวกรรมประยุกต์สิรินธร",
             code="S",
             latitude=7.006327821282247,
             longitude=100.50252641168618,
+            description="เปิดจันทร์-ศุกร์ 08:30-16:30\nโทร: +66-74-287-0576\nเว็บไซต์: http://www.coe.psu.ac.th/",
+        )
+        loc3 = Location(
+            name="คณะทันตแพทยศาสตร์",
+            code="Dent",
+            latitude=7.00822939668783,
+            longitude=100.49646275464498,
+            description="เปิดจันทร์-ศุกร์ 08:00-16:00\nโทร: +66-74-287-1293\nเว็บไซต์: http://www.dent.psu.ac.th/",
+        )
+        loc4 = Location(
+            name="คณะแพทยศาสตร์",
+            code="Med",
+            latitude=7.007227694458388,
+            longitude=100.49539693621114,
+            description="เปิดจันทร์-ศุกร์ 08:00-17:00\nโทร: +66-74-287-4656\nเว็บไซต์: http://www.med.psu.ac.th/",
+        )
+        loc5 = Location(
+            name="ศูนย์กีฬาและสุขภาพ",
+            code="Sport",
+            latitude=7.009715442579287,
+            longitude=100.50043455287542,
+            description="เปิดทุกวัน 06:00-22:00\nโทร: +66-74-287-7689\nเว็บไซต์: http://www.sport.psu.ac.th/",
+        )
+        loc6 = Location(
+            name="คณะนิติศาสตร์",
+            code="Law",
+            latitude=7.011680636991237,
+            longitude=100.49648841177901,
+            description="เปิดจันทร์-ศุกร์ 08:30-16:30\nโทร: +66-74-287-2134\nเว็บไซต์: http://www.law.psu.ac.th/",
+        )
+        loc7 = Location(
+            name="คณะวิทยาการจัดการ",
+            code="FMS",
+            latitude=7.0116184941311355,
+            longitude=100.49826934997274,
+            description="เปิดจันทร์-ศุกร์ 08:00-17:00\nโทร: +66-74-287-5067\nเว็บไซต์: http://www.fms.psu.ac.th/",
         )
 
-        session.add_all([loc1, loc2])
+        session.add_all([loc1, loc2, loc3, loc4, loc5, loc6, loc7])
         await session.flush()  # เพื่อให้ได้ id ของ location
 
-        # Rooms
-        room1 = Room(
-            name="A101",
-            location_id=loc1.id,
-            description="ห้องบรรยาย BSc101 ชั้น 1 อาคารเรียนและปฏิบัติการพื้นฐานทางวิทยาศาสตร์",
-        )
-        room2 = Room(
-            name="B201",
-            location_id=loc2.id,
-            description="ห้องบรรยาย S201 ชั้น 2 อาคารวิจัยวิศวกรรมประยุกต์สิรินธร",
-        )
-        room3 = Room(
-            name="C301",
-            location_id=loc2.id,
-            description="ห้องบรรยาย S301 ชั้น 3 อาคารวิจัยวิศวกรรมประยุกต์สิรินธร",
-        )
+        rooms = []
+        rooms += [
+            Room(
+                name="BSc101",
+                location_id=loc1.id,
+                description="ห้อง BSc101 อาคารเรียนและปฏิบัติการพื้นฐานทางวิทยาศาสตร์",
+            ),
+            Room(
+                name="BSc201",
+                location_id=loc1.id,
+                description="ห้อง BSc201 อาคารเรียนและปฏิบัติการพื้นฐานทางวิทยาศาสตร์",
+            ),
+            Room(
+                name="BSc301",
+                location_id=loc1.id,
+                description="ห้อง BSc301 อาคารเรียนและปฏิบัติการพื้นฐานทางวิทยาศาสตร์",
+            ),
+            Room(
+                name="BSc401",
+                location_id=loc1.id,
+                description="ห้อง BSc401 อาคารเรียนและปฏิบัติการพื้นฐานทางวิทยาศาสตร์",
+            ),
+            Room(
+                name="BSc501",
+                location_id=loc1.id,
+                description="ห้อง BSc501 อาคารเรียนและปฏิบัติการพื้นฐานทางวิทยาศาสตร์",
+            ),
+        ]
+        # loc2: S
+        rooms += [
+            Room(
+                name="S201",
+                location_id=loc2.id,
+                description="ห้อง S201 อาคารวิจัยวิศวกรรมประยุกต์สิรินธร",
+            ),
+            Room(
+                name="S301",
+                location_id=loc2.id,
+                description="ห้อง S301 อาคารวิจัยวิศวกรรมประยุกต์สิรินธร",
+            ),
+            Room(
+                name="S401",
+                location_id=loc2.id,
+                description="ห้อง S401 อาคารวิจัยวิศวกรรมประยุกต์สิรินธร",
+            ),
+            Room(
+                name="S501",
+                location_id=loc2.id,
+                description="ห้อง S501 อาคารวิจัยวิศวกรรมประยุกต์สิรินธร",
+            ),
+        ]
+        # loc3: Dent
+        rooms += [
+            Room(
+                name="Dent101",
+                location_id=loc3.id,
+                description="ห้อง Dent101 คณะทันตแพทยศาสตร์",
+            ),
+            Room(
+                name="Dent201",
+                location_id=loc3.id,
+                description="ห้อง Dent201 คณะทันตแพทยศาสตร์",
+            ),
+            Room(
+                name="Dent301",
+                location_id=loc3.id,
+                description="ห้อง Dent301 คณะทันตแพทยศาสตร์",
+            ),
+        ]
+        # loc4: Med
+        rooms += [
+            Room(
+                name="Med305",
+                location_id=loc4.id,
+                description="ห้อง Med305 คณะแพทยศาสตร์",
+            ),
+            Room(
+                name="Med405",
+                location_id=loc4.id,
+                description="ห้อง Med405 คณะแพทยศาสตร์",
+            ),
+            Room(
+                name="Med505",
+                location_id=loc4.id,
+                description="ห้อง Med505 คณะแพทยศาสตร์",
+            ),
+        ]
+        # loc5: Sport
+        rooms += [
+            Room(
+                name="Sport101",
+                location_id=loc5.id,
+                description="ห้อง Sport101 ศูนย์กีฬาและสุขภาพ",
+            ),
+            Room(
+                name="Sport201",
+                location_id=loc5.id,
+                description="ห้อง Sport201 ศูนย์กีฬาและสุขภาพ",
+            ),
+            Room(
+                name="Sport301",
+                location_id=loc5.id,
+                description="ห้อง Sport301 ศูนย์กีฬาและสุขภาพ",
+            ),
+        ]
+        # loc6: Law
+        rooms += [
+            Room(
+                name="Law101", location_id=loc6.id, description="ห้อง Law101 คณะนิติศาสตร์"
+            ),
+            Room(
+                name="Law201", location_id=loc6.id, description="ห้อง Law201 คณะนิติศาสตร์"
+            ),
+            Room(
+                name="Law301", location_id=loc6.id, description="ห้อง Law301 คณะนิติศาสตร์"
+            ),
+        ]
+        # loc7: FMS
+        rooms += [
+            Room(
+                name="FMS101",
+                location_id=loc7.id,
+                description="ห้อง FMS101 คณะวิทยาการจัดการ",
+            ),
+            Room(
+                name="FMS201",
+                location_id=loc7.id,
+                description="ห้อง FMS201 คณะวิทยาการจัดการ",
+            ),
+            Room(
+                name="FMS301",
+                location_id=loc7.id,
+                description="ห้อง FMS301 คณะวิทยาการจัดการ",
+            ),
+        ]
 
-        session.add_all([room1, room2, room3])
+        session.add_all(rooms)
         await session.commit()
         print("Locations and rooms created")
 
@@ -566,35 +722,35 @@ async def init_demo_courses():
                 day_of_week="Monday",
                 start_time=time(9, 0),
                 end_time=time(11, 0),
-                room_id=room_dict["A101"],
+                room_id=room_dict["BSc101"],
             ),
             CourseSchedule(
                 course_id=course1.id,
                 day_of_week="Monday",
                 start_time=time(13, 0),
                 end_time=time(15, 0),
-                room_id=room_dict["A101"],
+                room_id=room_dict["BSc101"],
             ),
             CourseSchedule(
                 course_id=course1.id,
                 day_of_week="Friday",
                 start_time=time(9, 0),
                 end_time=time(11, 0),
-                room_id=room_dict["A101"],
+                room_id=room_dict["BSc101"],
             ),
             CourseSchedule(
                 course_id=course2.id,
                 day_of_week="Wednesday",
                 start_time=time(13, 0),
                 end_time=time(15, 0),
-                room_id=room_dict["B201"],
+                room_id=room_dict["S201"],
             ),
             CourseSchedule(
                 course_id=course3.id,
                 day_of_week="Friday",
                 start_time=time(10, 0),
                 end_time=time(12, 0),
-                room_id=room_dict["C301"],
+                room_id=room_dict["S301"],
             ),
             # course4 (CHEM101)
             CourseSchedule(
@@ -665,6 +821,123 @@ async def init_demo_courses():
         ]
 
         session.add_all(schedules)
+        # Add mockup courses and schedules
+        mock_course1 = Course(
+            course_code="LAW101",
+            course_name="Introduction to Law",
+            credits=3,
+            available_seats=60,
+            description="พื้นฐานกฎหมายเบื้องต้นสำหรับนักศึกษาทุกสาขา",
+            created_at=datetime.now(),
+        )
+        mock_course2 = Course(
+            course_code="FMS201",
+            course_name="Management Principles",
+            credits=3,
+            available_seats=45,
+            description="หลักการจัดการและบริหารธุรกิจ",
+            created_at=datetime.now(),
+        )
+        mock_course3 = Course(
+            course_code="MED405",
+            course_name="Clinical Medicine",
+            credits=4,
+            available_seats=30,
+            description="การแพทย์คลินิกสำหรับนักศึกษาแพทย์",
+            created_at=datetime.now(),
+        )
+        mock_course4 = Course(
+            course_code="Dent301",
+            course_name="Dental Anatomy",
+            credits=2,
+            available_seats=25,
+            description="กายวิภาคศาสตร์ทางทันตกรรม",
+            created_at=datetime.now(),
+        )
+        mock_course5 = Course(
+            course_code="Sport101",
+            course_name="Sports Science",
+            credits=2,
+            available_seats=40,
+            description="วิทยาศาสตร์การกีฬาและสุขภาพ",
+            created_at=datetime.now(),
+        )
+        session.add_all(
+            [mock_course1, mock_course2, mock_course3, mock_course4, mock_course5]
+        )
+        await session.flush()
+        # Schedules for mock courses
+        mock_schedules = [
+            # LAW101: only one day
+            CourseSchedule(
+                course_id=mock_course1.id,
+                day_of_week="Tuesday",
+                start_time=time(10, 0),
+                end_time=time(12, 0),
+                room_id=room_dict["Law101"],
+            ),
+            # FMS201: two days
+            CourseSchedule(
+                course_id=mock_course2.id,
+                day_of_week="Monday",
+                start_time=time(14, 0),
+                end_time=time(16, 0),
+                room_id=room_dict["FMS101"],
+            ),
+            CourseSchedule(
+                course_id=mock_course2.id,
+                day_of_week="Thursday",
+                start_time=time(9, 0),
+                end_time=time(11, 0),
+                room_id=room_dict["FMS201"],
+            ),
+            # MED405: three days
+            CourseSchedule(
+                course_id=mock_course3.id,
+                day_of_week="Monday",
+                start_time=time(8, 0),
+                end_time=time(10, 0),
+                room_id=room_dict["Med405"],
+            ),
+            CourseSchedule(
+                course_id=mock_course3.id,
+                day_of_week="Wednesday",
+                start_time=time(13, 0),
+                end_time=time(15, 0),
+                room_id=room_dict["Med505"],
+            ),
+            CourseSchedule(
+                course_id=mock_course3.id,
+                day_of_week="Friday",
+                start_time=time(10, 0),
+                end_time=time(12, 0),
+                room_id=room_dict["Med305"],
+            ),
+            # Dent301: one day
+            CourseSchedule(
+                course_id=mock_course4.id,
+                day_of_week="Thursday",
+                start_time=time(13, 0),
+                end_time=time(15, 0),
+                room_id=room_dict["Dent301"],
+            ),
+            # Sport101: two days
+            CourseSchedule(
+                course_id=mock_course5.id,
+                day_of_week="Tuesday",
+                start_time=time(9, 0),
+                end_time=time(11, 0),
+                room_id=room_dict["Sport101"],
+            ),
+            CourseSchedule(
+                course_id=mock_course5.id,
+                day_of_week="Friday",
+                start_time=time(14, 0),
+                end_time=time(16, 0),
+                room_id=room_dict["Sport301"],
+            ),
+        ]
+        session.add_all(mock_schedules)
         await session.commit()
         print("Demo courses and schedules created")
 
