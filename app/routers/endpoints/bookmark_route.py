@@ -96,7 +96,7 @@ async def get_user_bookmarks(
 
 
 @router.post("/{announcement_id}", response_model=BookmarkResponse)
-async def create_bookmark(
+async def add_bookmark(
     announcement_id: int,
     current_user: User = Depends(get_current_user),
     session: AsyncSession = Depends(get_session),
@@ -146,7 +146,7 @@ async def create_bookmark(
 
 
 @router.delete("/{announcement_id}")
-async def delete_bookmark(
+async def remove_bookmark(
     announcement_id: int,
     current_user: User = Depends(get_current_user),
     session: AsyncSession = Depends(get_session),
