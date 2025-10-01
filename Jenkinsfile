@@ -47,7 +47,7 @@ pipeline {
                 sh 'export PATH="$HOME/.local/bin:$PATH" && /root/.local/bin/poetry install --no-interaction'
 
                 // รัน tests + coverage
-                sh 'export PATH="$HOME/.local/bin:$PATH" && /root/.local/bin/poetry run pytest tests/ --cov=app --cov-report=html --cov-report=term -v/'
+                sh 'export PATH="$HOME/.local/bin:$PATH" && /root/.local/bin/poetry run pytest tests/ --cov=app --cov-report=html --cov-report=term -v'
             }
         }
 
